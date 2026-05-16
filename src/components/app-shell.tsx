@@ -29,7 +29,7 @@ const navItems = [
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-transparent">
       <header className="fixed inset-x-0 top-0 z-40 border-b border-border/35 bg-card/95 backdrop-blur">
         <div className="flex h-12 items-center gap-3 px-3">
           <Brand />
@@ -64,7 +64,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
       </header>
 
-      <aside className="fixed bottom-0 left-0 top-12 z-30 hidden w-64 border-r border-border/35 bg-background px-3 py-5 lg:block">
+      <aside className="fixed bottom-0 left-0 top-12 z-30 hidden w-64 border-r border-border/35 bg-background/68 px-3 py-5 backdrop-blur-xl lg:block">
         <nav className="space-y-1">
           {navItems.slice(0, 3).map((item) => (
             <Link

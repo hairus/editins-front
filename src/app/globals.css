@@ -3,51 +3,51 @@
 @tailwind utilities;
 
 :root {
-  --background: 220 24% 96%;
-  --foreground: 222 28% 20%;
+  --background: 214 44% 97%;
+  --foreground: 218 30% 18%;
   --card: 0 0% 100%;
-  --card-foreground: 222 28% 20%;
-  --primary: 218 72% 50%;
+  --card-foreground: 218 30% 18%;
+  --primary: 216 58% 48%;
   --primary-foreground: 0 0% 100%;
-  --secondary: 27 78% 48%;
+  --secondary: 29 68% 52%;
   --secondary-foreground: 0 0% 100%;
-  --accent: 215 84% 68%;
+  --accent: 214 72% 78%;
   --accent-foreground: 0 0% 100%;
-  --muted: 220 18% 92%;
-  --muted-foreground: 222 10% 47%;
-  --success: 164 36% 43%;
+  --muted: 215 38% 93%;
+  --muted-foreground: 218 15% 48%;
+  --success: 211 52% 43%;
   --success-foreground: 0 0% 100%;
-  --warning: 36 75% 54%;
+  --warning: 36 72% 55%;
   --warning-foreground: 0 0% 100%;
-  --destructive: 15 72% 52%;
+  --destructive: 15 68% 53%;
   --destructive-foreground: 0 0% 100%;
-  --border: 220 16% 84%;
-  --input: 220 16% 78%;
-  --ring: 215 84% 68%;
+  --border: 214 28% 86%;
+  --input: 214 28% 80%;
+  --ring: 216 58% 62%;
 }
 
 .dark {
-  --background: 222 28% 11%;
-  --foreground: 218 30% 92%;
+  --background: 222 27% 12%;
+  --foreground: 218 28% 92%;
   --card: 222 22% 16%;
   --card-foreground: 218 30% 92%;
-  --primary: 216 80% 67%;
+  --primary: 216 68% 68%;
   --primary-foreground: 0 0% 100%;
-  --secondary: 28 80% 55%;
+  --secondary: 29 78% 58%;
   --secondary-foreground: 0 0% 100%;
-  --accent: 214 76% 70%;
+  --accent: 214 66% 74%;
   --accent-foreground: 0 0% 100%;
   --muted: 222 18% 22%;
-  --muted-foreground: 220 16% 70%;
-  --success: 164 45% 55%;
+  --muted-foreground: 218 16% 72%;
+  --success: 213 64% 68%;
   --success-foreground: 222 28% 11%;
-  --warning: 36 85% 60%;
+  --warning: 36 80% 62%;
   --warning-foreground: 222 28% 11%;
-  --destructive: 15 78% 60%;
+  --destructive: 15 74% 62%;
   --destructive-foreground: 0 0% 100%;
   --border: 222 15% 28%;
   --input: 222 15% 34%;
-  --ring: 214 76% 70%;
+  --ring: 174 48% 60%;
 }
 
 * {
@@ -62,14 +62,17 @@ html {
 body {
   min-height: 100vh;
   color: hsl(var(--foreground));
-  background: hsl(var(--background));
+  background:
+    linear-gradient(132deg, rgba(250, 253, 255, .9) 0%, rgba(235, 244, 255, .78) 45%, rgba(246, 249, 255, .92) 100%),
+    linear-gradient(180deg, hsl(var(--background)) 0%, hsl(var(--background)) 100%);
   font-family: var(--font-geist-sans), ui-sans-serif, sans-serif;
   letter-spacing: 0;
 }
 
 .dark body {
   background:
-    linear-gradient(180deg, hsl(var(--background)) 0%, color-mix(in srgb, hsl(var(--background)) 88%, hsl(var(--muted))) 100%);
+    linear-gradient(132deg, rgba(9, 19, 36, .97) 0%, rgba(14, 31, 55, .92) 48%, rgba(24, 29, 47, .97) 100%),
+    linear-gradient(180deg, hsl(var(--background)) 0%, hsl(var(--background)) 100%);
 }
 
 a {
