@@ -65,7 +65,7 @@ body {
   background:
     linear-gradient(132deg, rgba(250, 253, 255, .9) 0%, rgba(235, 244, 255, .78) 45%, rgba(246, 249, 255, .92) 100%),
     linear-gradient(180deg, hsl(var(--background)) 0%, hsl(var(--background)) 100%);
-  font-family: var(--font-geist-sans), ui-sans-serif, sans-serif;
+  font-family: var(--font-inter), var(--font-geist-sans), ui-sans-serif, sans-serif;
   letter-spacing: 0;
 }
 
@@ -103,5 +103,31 @@ select {
 
   .focus-ring {
     @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring;
+  }
+
+  .soft-scrollbar {
+    scrollbar-color: hsl(var(--primary) / .42) transparent;
+    scrollbar-width: thin;
+  }
+
+  .soft-scrollbar::-webkit-scrollbar {
+    height: 10px;
+    width: 10px;
+  }
+
+  .soft-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .soft-scrollbar::-webkit-scrollbar-thumb {
+    background: hsl(var(--primary) / .28);
+    border: 3px solid transparent;
+    border-radius: 999px;
+    background-clip: padding-box;
+  }
+
+  .soft-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--primary) / .42);
+    background-clip: padding-box;
   }
 }

@@ -1,33 +1,148 @@
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
-  BarChart3,
+  AlertTriangle,
   Bell,
-  Boxes,
+  ChevronDown,
+  CheckCircle2,
   CreditCard,
   HelpCircle,
-  ImagePlus,
   LayoutDashboard,
-  Link2,
+  LogOut,
   Search,
   Settings2,
   Sparkles,
+  X,
   UserRound,
 } from "lucide-react";
 
 import { Brand } from "@/components/brand";
+import { useAuth } from "@/components/auth-provider";
+import { useProductCatalog } from "@/components/product-catalog-provider";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { googleLoginUrl } from "@/lib/api/client";
+import { tierMarketingLabel } from "@/lib/marketing-copy";
+import packageInfo from "../../package.json";
 
 const navItems = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/generate", label: "Generate", icon: ImagePlus },
-  { href: "/billing", label: "Billing", icon: CreditCard },
-  { href: "/affiliate", label: "Affiliate", icon: Link2 },
-  { href: "/admin/dashboard", label: "Admin", icon: BarChart3 },
+  { href: "/dashboard", label: "Home", icon: LayoutDashboard },
 ];
 
+const productNavItems = [
+  { href: "/generate", label: "Pilih Produk", icon: Sparkles },
+  { href: "/billing", label: "Langganan", icon: CreditCard },
+  { href: "/dashboard/settings", label: "Pengaturan", icon: Settings2 },
+];
+
+type NotificationTone = "success" | "warning" | "neutral" | "danger";
+type NotificationItem = {
+  detail: string;
+  icon: React.ComponentType<{ className?: string }>;
+  title: string;
+  tone: NotificationTone;
+  createdAt?: string;
+};
+
 export function AppShell({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+  const { user, isLoading, logout } = useAuth();
+  const { products } = useProductCatalog();
+  const [isNotificationOpen, setNotificationOpen] = useState(false);
+  const [isAccountOpen, setAccountOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [isSearchFocused, setSearchFocused] = useState(false);
+  const [hasUnreadNotification, setHasUnreadNotification] = useState(false);
+  const [liveNotifications, setLiveNotifications] = useState<NotificationItem[]>([]);
+  const displayName = user ? titleCaseName(user.name) : "";
+  const searchSuggestions = useMemo(() => {
+    const normalizedTerm = searchTerm.trim().toLowerCase();
+
+    return products
+      .filter((product) => {
+        if (!normalizedTerm) return true;
+
+        return [product.title, product.shortTitle, product.description, product.output]
+          .join(" ")
+          .toLowerCase()
+          .includes(normalizedTerm);
+      })
+      .slice(0, 5);
+  }, [products, searchTerm]);
+  const notifications = useMemo<NotificationItem[]>(
+    () => [
+      ...liveNotifications,
+      {
+        icon: user ? CheckCircle2 : AlertTriangle,
+        title: user ? "Akun siap digunakan" : "Masuk untuk mulai",
+        detail: user
+          ? `${displayName} memiliki ${user.profile.credits_remaining} kredit aktif di ${tierMarketingLabel(user.profile.tier)}.`
+          : "Masuk agar hasil foto, kredit, dan riwayat pekerjaan tersimpan aman.",
+        tone: user ? "success" : "warning",
+      },
+      {
+        icon: CreditCard,
+        title: "Top up sesuai akun",
+        detail: user ? `Pembelian paket akan masuk ke akun ${user.email}.` : "Top up kredit tersedia setelah masuk.",
+        tone: "neutral",
+      },
+    ],
+    [displayName, liveNotifications, user],
+  );
+
+  useEffect(() => {
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setNotificationOpen(false);
+        setAccountOpen(false);
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
+
+  useEffect(() => {
+    function handleNotification(event: Event) {
+      const payload = (event as CustomEvent<Partial<Omit<NotificationItem, "icon">>>).detail;
+
+      setLiveNotifications((current) =>
+        [
+          {
+            icon: payload?.tone === "success" ? CheckCircle2 : AlertTriangle,
+            title: payload?.title ?? "Ada kendala",
+            detail: payload?.detail ?? "Proses belum berhasil. Cek detailnya sebelum mencoba lagi.",
+            tone: payload?.tone ?? "warning",
+            createdAt: "Baru saja",
+          },
+          ...current,
+        ].slice(0, 5),
+      );
+      setHasUnreadNotification(true);
+    }
+
+    window.addEventListener("editins:notify", handleNotification);
+
+    return () => window.removeEventListener("editins:notify", handleNotification);
+  }, []);
+
+  useEffect(() => {
+    if (!isNotificationOpen) return;
+
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isNotificationOpen]);
+
   return (
     <div className="min-h-screen bg-transparent">
       <header className="fixed inset-x-0 top-0 z-40 border-b border-border/35 bg-card/95 backdrop-blur">
@@ -37,98 +152,351 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <label className="relative w-full max-w-xl">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <input
-                className="h-8 w-full rounded-ui border border-input/45 bg-background/45 pl-9 pr-3 text-sm outline-none transition placeholder:text-muted-foreground focus:border-primary focus:ring-1 focus:ring-ring"
-                placeholder="Search"
+                className="h-8 w-full rounded-ui border border-input/60 bg-background/70 pl-9 pr-3 text-sm outline-none transition placeholder:text-muted-foreground focus:border-primary focus:ring-1 focus:ring-ring"
+                placeholder="Cari desain foto, contoh: foto produk atau foto 4x6"
+                value={searchTerm}
+                onBlur={() => window.setTimeout(() => setSearchFocused(false), 120)}
+                onChange={(event) => setSearchTerm(event.target.value)}
+                onFocus={() => setSearchFocused(true)}
               />
+              {isSearchFocused && searchSuggestions.length > 0 ? (
+                <div className="absolute left-0 right-0 top-10 z-50 overflow-hidden rounded-ui border border-border/65 bg-card shadow-panel">
+                  {searchSuggestions.map((product) => (
+                    <Link
+                      key={product.slug}
+                      className="flex items-center justify-between gap-3 px-3 py-2.5 text-sm transition hover:bg-muted"
+                      href={`/generate/${product.slug}`}
+                      onClick={() => {
+                        setSearchTerm("");
+                        setSearchFocused(false);
+                      }}
+                    >
+                      <span className="min-w-0">
+                        <span className="block truncate font-semibold">{product.shortTitle}</span>
+                        <span className="block truncate text-xs font-medium text-muted-foreground">{product.output}</span>
+                      </span>
+                      <Badge tone={product.credits > 1 ? "warning" : "success"}>{product.credits} kredit</Badge>
+                    </Link>
+                  ))}
+                </div>
+              ) : null}
             </label>
           </div>
           <div className="ml-auto flex items-center gap-1.5">
-            <Link href="/generate/foto-produk" className="hidden sm:block">
-              <Button size="sm">Create</Button>
-            </Link>
             <ThemeToggle />
-            <button className="grid h-8 w-8 place-items-center rounded-ui text-muted-foreground transition hover:bg-muted hover:text-foreground" aria-label="Notifikasi">
+            <button
+              className="relative grid h-8 w-8 place-items-center rounded-ui text-muted-foreground transition hover:bg-muted hover:text-foreground"
+              aria-label="Notifikasi"
+              aria-haspopup="dialog"
+              aria-expanded={isNotificationOpen}
+              onClick={() => {
+                setNotificationOpen(true);
+                setHasUnreadNotification(false);
+              }}
+            >
               <Bell className="h-4 w-4" />
+              <span
+                className={
+                  hasUnreadNotification
+                    ? "absolute right-1.5 top-1.5 h-2.5 w-2.5 rounded-full bg-destructive ring-2 ring-card"
+                    : "absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-warning ring-2 ring-card"
+                }
+              />
             </button>
             <button className="grid h-8 w-8 place-items-center rounded-ui text-muted-foreground transition hover:bg-muted hover:text-foreground" aria-label="Bantuan">
               <HelpCircle className="h-4 w-4" />
             </button>
-            <Link
-              href="/dashboard/settings"
-              className="grid h-8 w-8 place-items-center rounded-full bg-primary text-xs font-bold text-primary-foreground transition hover:bg-primary/90"
-              aria-label="Pengaturan"
-            >
-              <UserRound className="h-4 w-4" />
-            </Link>
+            {user ? (
+              <div className="relative flex items-center gap-1.5">
+                <span className="hidden rounded-ui border border-border/55 bg-background/40 px-2 py-1 text-xs font-semibold text-muted-foreground sm:inline-flex">
+                  {user.profile.credits_remaining} kredit
+                </span>
+                <button
+                  className="flex h-8 items-center gap-1.5 rounded-full bg-primary pl-2 pr-2 text-xs font-bold text-primary-foreground transition hover:bg-primary/90"
+                  aria-label="Menu akun"
+                  aria-haspopup="menu"
+                  aria-expanded={isAccountOpen}
+                  onClick={() => setAccountOpen((current) => !current)}
+                >
+                  <span className="grid h-5 w-5 place-items-center rounded-full bg-primary-foreground/18">{initials(displayName)}</span>
+                  <ChevronDown className="h-3.5 w-3.5" />
+                </button>
+                {isAccountOpen ? (
+                  <div className="absolute right-0 top-10 z-50 w-72 overflow-hidden rounded-ui border border-border/55 bg-card shadow-panel">
+                    <div className="border-b border-border/45 p-3">
+                      <p className="truncate text-sm font-semibold">{displayName}</p>
+                      <p className="mt-1 truncate text-xs font-medium text-muted-foreground">{user.email}</p>
+                      <Badge className="mt-2" tone="success">
+                        {tierMarketingLabel(user.profile.tier)}
+                      </Badge>
+                    </div>
+                    <div className="grid p-1.5">
+                      <MenuLink href="/dashboard/settings" icon={Settings2} label="Pengaturan akun" onClick={() => setAccountOpen(false)} />
+                      <button
+                        className="flex min-h-10 items-center gap-3 rounded-ui px-3 text-left text-sm font-semibold text-destructive transition hover:bg-destructive/10"
+                        type="button"
+                        onClick={() => {
+                          setAccountOpen(false);
+                          logout().catch(() => undefined);
+                        }}
+                      >
+                        <LogOut className="h-4 w-4" />
+                        Keluar
+                      </button>
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+            ) : (
+              <div className="relative">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  aria-haspopup="menu"
+                  aria-expanded={isAccountOpen}
+                  onClick={() => setAccountOpen((current) => !current)}
+                >
+                  <UserRound className="h-4 w-4" />
+                  {isLoading ? "..." : "Masuk"}
+                  <ChevronDown className="h-3.5 w-3.5" />
+                </Button>
+                {isAccountOpen ? (
+                  <div className="absolute right-0 top-10 z-50 w-64 overflow-hidden rounded-ui border border-border/55 bg-card p-1.5 shadow-panel">
+                    <a
+                      className="flex min-h-10 items-center gap-3 rounded-ui px-3 text-sm font-semibold transition hover:bg-muted"
+                      href={googleLoginUrl()}
+                    >
+                      <UserRound className="h-4 w-4" />
+                      Lanjut dengan Google
+                    </a>
+                    <MenuLink href="/login" icon={UserRound} label="Masuk dengan email" onClick={() => setAccountOpen(false)} />
+                  </div>
+                ) : null}
+              </div>
+            )}
           </div>
         </div>
       </header>
 
-      <aside className="fixed bottom-0 left-0 top-12 z-30 hidden w-64 border-r border-border/35 bg-background/68 px-3 py-5 backdrop-blur-xl lg:block">
+      <aside className="fixed bottom-0 left-0 top-12 z-30 hidden w-64 overflow-hidden border-r border-border/60 bg-card/96 px-3 py-5 shadow-panel backdrop-blur-xl lg:block">
+        <div className="relative z-10 h-full">
         <nav className="space-y-1">
-          {navItems.slice(0, 3).map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="flex min-h-9 items-center gap-3 rounded-ui px-3 text-sm font-semibold text-muted-foreground transition hover:bg-muted hover:text-foreground"
-            >
-              <item.icon className="h-4 w-4" />
-              {item.label}
-            </Link>
-          ))}
-        </nav>
+          <p className="mb-3 px-3 text-xs font-bold uppercase tracking-[0.12em] text-muted-foreground">Dashboard</p>
+          {navItems.map((item) => {
+            const isActive = isActiveHref(pathname, item.href);
 
-        <div className="mt-5 border-t border-border/35 pt-5">
-          <p className="px-3 text-xs font-bold text-muted-foreground">Workspace</p>
-          <div className="mt-3 flex items-center gap-3 rounded-ui px-3 py-2">
-            <span className="grid h-7 w-7 place-items-center rounded-ui bg-muted text-xs font-black">E</span>
-            <span className="text-sm font-bold">Editins Workspace</span>
-          </div>
-          <nav className="mt-2 space-y-1">
-            {[
-              { href: "/generate", label: "AI Studio", icon: Sparkles },
-              { href: "/affiliate", label: "Affiliate", icon: Link2 },
-              { href: "/admin/dashboard", label: "Internal Admin", icon: Boxes },
-              { href: "/billing", label: "Billing", icon: CreditCard },
-              { href: "/dashboard/settings", label: "Settings", icon: Settings2 },
-            ].map((item) => (
+            return (
               <Link
                 key={item.href}
                 href={item.href}
-                className="flex min-h-9 items-center gap-3 rounded-ui px-6 text-sm font-semibold text-muted-foreground transition hover:bg-muted hover:text-foreground"
+                className={navLinkClass(isActive, "px-3")}
               >
                 <item.icon className="h-4 w-4" />
                 {item.label}
               </Link>
-            ))}
+            );
+          })}
+        </nav>
+
+        <div className="mt-5 border-t border-border/35 pt-5">
+          <p className="px-3 text-xs font-bold uppercase tracking-[0.12em] text-muted-foreground">Produk</p>
+          <div className="mt-3 flex items-center gap-3 rounded-ui border border-border/45 bg-background/35 px-3 py-2 text-muted-foreground">
+            <span className="grid h-7 w-7 place-items-center rounded-ui bg-muted text-xs font-black text-muted-foreground">E</span>
+            <span className="text-sm font-bold">Editins Studio</span>
+          </div>
+          <nav className="mt-2 space-y-1">
+            {productNavItems.map((item) => {
+              const isActive = isActiveHref(pathname, item.href);
+
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={navLinkClass(isActive, "px-6")}
+                >
+                  <item.icon className="h-4 w-4" />
+                  {item.label}
+                </Link>
+              );
+            })}
           </nav>
         </div>
 
-        <div className="absolute bottom-5 left-3 right-3 rounded-ui border border-border/35 bg-card p-3">
-          <div className="flex items-center justify-between gap-3">
-            <p className="text-sm font-bold">VIP Access</p>
-            <Badge tone="neutral">82 kredit</Badge>
+        <div className="absolute bottom-5 left-3 right-3 overflow-hidden rounded-ui border border-secondary/20 bg-[linear-gradient(145deg,hsl(var(--secondary)/.14),hsl(var(--background)/.84)_46%,hsl(var(--primary)/.10))] p-3 shadow-soft">
+          <div className="flex items-center gap-3">
+            <span className="relative grid h-10 w-10 shrink-0 place-items-center rounded-full border border-secondary/25 bg-card/80 text-sm font-black text-secondary shadow-soft">
+              {user ? initials(displayName) : "E"}
+              <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border-2 border-card bg-success" />
+            </span>
+            <div className="min-w-0">
+              <p className="truncate text-sm font-bold">{user ? displayName : "Belum masuk"}</p>
+              <p className="mt-0.5 truncate text-[11px] font-semibold text-muted-foreground">
+                {user ? tierMarketingLabel(user.profile.tier) : "Akun Editins"}
+              </p>
+            </div>
           </div>
-          <p className="mt-2 text-xs font-medium leading-5 text-muted-foreground">Workspace frontend siap dihubungkan ke Laravel API.</p>
+          <div className="mt-3 flex items-center justify-between gap-2 rounded-ui border border-border/35 bg-card/45 px-2.5 py-2">
+            <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground">Kredit</span>
+            <span className="text-xs font-black text-secondary">{user ? user.profile.credits_remaining : 0}</span>
+          </div>
+          <p className="mt-2 line-clamp-1 text-xs font-medium text-muted-foreground">
+            {user ? user.email : "Masuk untuk menyimpan hasil foto."}
+          </p>
+        </div>
         </div>
       </aside>
 
-      <main className="pt-12 lg:pl-64">{children}</main>
+      <main className="pt-12 lg:pl-64">
+        {children}
+        <footer className="border-t border-border/45 px-4 py-5 text-center text-xs font-semibold text-muted-foreground lg:px-8">
+          v{packageInfo.version} - Powered by Editins
+        </footer>
+      </main>
 
       <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-border/35 bg-card/95 px-2 py-2 shadow-soft backdrop-blur lg:hidden">
-        <div className="grid grid-cols-5 gap-1">
-          {navItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="flex min-h-12 flex-col items-center justify-center gap-1 rounded-ui text-[11px] font-bold text-muted-foreground transition hover:bg-muted hover:text-foreground"
-            >
-              <item.icon className="h-4 w-4" />
-              <span className="max-w-full truncate">{item.label}</span>
-            </Link>
-          ))}
+        <div className="grid grid-cols-1 gap-1">
+          {navItems.map((item) => {
+            const isActive = isActiveHref(pathname, item.href);
+
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={mobileNavLinkClass(isActive)}
+              >
+                <item.icon className="h-4 w-4" />
+                <span className="max-w-full truncate">{item.label}</span>
+              </Link>
+            );
+          })}
         </div>
       </nav>
+
+      {isNotificationOpen ? (
+        <div
+          className="fixed inset-0 z-50 grid place-items-center bg-foreground/45 p-4 backdrop-blur-sm"
+          role="presentation"
+          onMouseDown={() => setNotificationOpen(false)}
+        >
+          <section
+            aria-labelledby="notification-dialog-title"
+            aria-modal="true"
+            className="w-full max-w-lg overflow-hidden rounded-ui border border-border/65 bg-card shadow-panel"
+            role="dialog"
+            onMouseDown={(event) => event.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-3 border-b border-border/45 px-4 py-3">
+              <div>
+                <h2 id="notification-dialog-title" className="text-sm font-semibold text-foreground">
+                  Notifikasi
+                </h2>
+                <p className="mt-1 text-xs font-medium text-muted-foreground">Kabar terbaru tentang akun dan proses foto.</p>
+              </div>
+              <button
+                type="button"
+                className="grid h-9 w-9 shrink-0 place-items-center rounded-ui text-muted-foreground transition hover:bg-muted hover:text-foreground"
+                aria-label="Tutup notifikasi"
+                onClick={() => setNotificationOpen(false)}
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="divide-y divide-border/55">
+              {notifications.map((item) => (
+                <article key={item.title} className="flex gap-3 px-4 py-3">
+                  <span
+                    className={
+                      item.tone === "success"
+                        ? "grid h-9 w-9 shrink-0 place-items-center rounded-ui bg-success/12 text-success"
+                        : item.tone === "danger"
+                          ? "grid h-9 w-9 shrink-0 place-items-center rounded-ui bg-destructive/12 text-destructive"
+                        : item.tone === "warning"
+                          ? "grid h-9 w-9 shrink-0 place-items-center rounded-ui bg-warning/14 text-warning"
+                          : "grid h-9 w-9 shrink-0 place-items-center rounded-ui bg-muted text-muted-foreground"
+                    }
+                  >
+                    <item.icon className="h-4 w-4" />
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-foreground">{item.title}</p>
+                    <p className="mt-1 text-sm font-medium leading-6 text-muted-foreground">{item.detail}</p>
+                    {item.createdAt ? <p className="mt-1 text-[11px] font-semibold text-muted-foreground">{item.createdAt}</p> : null}
+                  </div>
+                </article>
+              ))}
+            </div>
+            <div className="flex justify-end border-t border-border/45 px-4 py-3">
+              <Button size="sm" variant="outline" onClick={() => setNotificationOpen(false)}>
+                Tutup
+              </Button>
+            </div>
+          </section>
+        </div>
+      ) : null}
     </div>
   );
+}
+
+function MenuLink({
+  href,
+  icon: Icon,
+  label,
+  onClick,
+}: {
+  href: string;
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  onClick?: () => void;
+}) {
+  return (
+    <Link
+      className="flex min-h-10 items-center gap-3 rounded-ui px-3 text-sm font-semibold transition hover:bg-muted"
+      href={href}
+      onClick={onClick}
+    >
+      <Icon className="h-4 w-4" />
+      {label}
+    </Link>
+  );
+}
+
+function initials(name: string) {
+  return name
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join("") || "E";
+}
+
+function isActiveHref(pathname: string, href: string) {
+  if (href === "/dashboard") return pathname === href;
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
+
+function navLinkClass(isActive: boolean, paddingClass: string) {
+  return [
+    "flex min-h-9 items-center gap-3 rounded-ui text-sm font-semibold transition",
+    paddingClass,
+    isActive
+      ? "border border-secondary/25 bg-secondary/12 text-secondary shadow-[0_10px_22px_-18px_hsl(var(--secondary))]"
+      : "text-muted-foreground hover:bg-secondary/10 hover:text-secondary",
+  ].join(" ");
+}
+
+function mobileNavLinkClass(isActive: boolean) {
+  return [
+    "flex min-h-12 flex-col items-center justify-center gap-1 rounded-ui text-[11px] font-bold transition",
+    isActive
+      ? "border border-secondary/25 bg-secondary/12 text-secondary shadow-[0_10px_22px_-18px_hsl(var(--secondary))]"
+      : "text-muted-foreground hover:bg-secondary/10 hover:text-secondary",
+  ].join(" ");
+}
+
+function titleCaseName(name: string) {
+  return name
+    .trim()
+    .split(/\s+/)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+    .join(" ");
 }

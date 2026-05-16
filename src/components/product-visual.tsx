@@ -7,7 +7,7 @@ export function ProductVisual() {
         <div className="rounded-ui border border-border bg-muted/70 p-3">
           <div className="mb-3 flex items-center justify-between">
             <Badge>Before</Badge>
-            <span className="text-xs font-bold text-muted-foreground">HP photo</span>
+            <span className="text-xs font-bold text-muted-foreground">Foto HP</span>
           </div>
           <div className="grid aspect-[4/5] place-items-center rounded-ui bg-background/45">
             <div className="h-32 w-24 rotate-[-4deg] rounded-[22px] border border-foreground/10 bg-muted shadow-soft" />
@@ -16,7 +16,7 @@ export function ProductVisual() {
         <div className="rounded-ui border border-border bg-muted/40 p-3">
           <div className="mb-3 flex items-center justify-between">
             <Badge tone="success">After</Badge>
-            <span className="text-xs font-bold text-muted-foreground">AI studio</span>
+            <span className="text-xs font-bold text-muted-foreground">Studio rapi</span>
           </div>
           <div className="relative grid aspect-[4/5] place-items-center overflow-hidden rounded-ui bg-[linear-gradient(160deg,hsl(var(--background))_0%,hsl(var(--muted))_100%)]">
             <div className="absolute bottom-10 h-8 w-40 rounded-[50%] bg-foreground/18 blur-md" />

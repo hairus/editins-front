@@ -1,15 +1,19 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
 import { Clock3, ImagePlus, LayoutGrid, Sparkles, Users } from "lucide-react";
 
 import { AppShell } from "@/components/app-shell";
+import { useProductCatalog } from "@/components/product-catalog-provider";
 import { ProductVisual } from "@/components/product-visual";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Panel } from "@/components/ui/panel";
-import { features } from "@/data/mock";
 
 export default function Home() {
+  const { error, isLoading, products } = useProductCatalog();
+
   return (
     <AppShell>
       <section className="app-container pb-24 pt-8">
@@ -27,17 +31,17 @@ export default function Home() {
                     className="h-12 w-auto object-contain"
                   />
                 </div>
-                <Badge>Workspace</Badge>
+                <Badge>Studio</Badge>
               </div>
-              <h1 className="mt-5 text-2xl font-bold tracking-normal">Editins Workspace</h1>
+              <h1 className="mt-5 text-2xl font-bold tracking-normal">Editins Studio</h1>
               <p className="mt-2 text-sm font-medium leading-6 text-muted-foreground">
-                Kelola generate foto produk, banner, billing, dan affiliate dalam satu area kerja yang ringkas.
+                Buat foto produk, hapus latar, siapkan banner promo, dan kelola kredit dalam satu tempat.
               </p>
               <div className="mt-5 grid gap-2">
                 {[
-                  { icon: Clock3, label: "P95 generate target", value: "< 20 detik" },
-                  { icon: Users, label: "Beta workspace", value: "50 users" },
-                  { icon: LayoutGrid, label: "MVP feature", value: "3 workflows" },
+                  { icon: Clock3, label: "Target proses", value: "< 20 detik" },
+                  { icon: Users, label: "Akses awal", value: "50 kreator" },
+                  { icon: LayoutGrid, label: "Pilihan visual", value: "3 mode" },
                 ].map((item) => (
                   <div key={item.label} className="flex items-center justify-between gap-3 rounded-ui border border-border bg-background/25 px-3 py-2">
                     <span className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
@@ -55,13 +59,23 @@ export default function Home() {
           <section className="mt-8">
             <div className="flex items-center gap-2">
               <Sparkles className="h-5 w-5 text-muted-foreground" />
-              <h2 className="text-base font-bold">Most popular templates</h2>
+              <h2 className="text-base font-bold">Template favorit</h2>
             </div>
             <p className="mt-2 text-sm font-medium text-muted-foreground">
               Mulai dari workflow paling sering dipakai UMKM.
             </p>
             <div className="mt-4 grid gap-3 md:grid-cols-3">
-              {features.map((feature) => (
+              {isLoading ? (
+                <Panel className="grid min-h-32 place-items-center p-4 text-sm font-semibold text-muted-foreground md:col-span-3">
+                  Memuat template...
+                </Panel>
+              ) : null}
+              {error ? (
+                <Panel className="grid min-h-32 place-items-center p-4 text-center text-sm font-semibold text-destructive md:col-span-3">
+                  {error}
+                </Panel>
+              ) : null}
+              {products.map((feature) => (
                 <Link key={feature.slug} href={`/generate/${feature.slug}`}>
                   <Panel className="overflow-hidden transition hover:border-primary/45">
                     <div className="h-16 bg-muted" />
@@ -81,7 +95,7 @@ export default function Home() {
           <section className="mt-8">
             <div className="flex items-center gap-2">
               <Clock3 className="h-5 w-5 text-muted-foreground" />
-              <h2 className="text-base font-bold">Recently viewed</h2>
+              <h2 className="text-base font-bold">Akses cepat</h2>
             </div>
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               <Link href="/dashboard">
@@ -91,8 +105,8 @@ export default function Home() {
                       <LayoutGrid className="h-4 w-4" />
                     </span>
                     <div>
-                      <p className="text-sm font-bold">Dashboard</p>
-                      <p className="text-xs font-medium text-muted-foreground">History, credit, queue state</p>
+                      <p className="text-sm font-bold">Home</p>
+                      <p className="text-xs font-medium text-muted-foreground">Riwayat, kredit, dan status proses</p>
                     </div>
                   </div>
                 </Panel>
@@ -105,7 +119,7 @@ export default function Home() {
                     </span>
                     <div>
                       <p className="text-sm font-bold">Foto Produk Studio</p>
-                      <p className="text-xs font-medium text-muted-foreground">Upload, style picker, preview</p>
+                      <p className="text-xs font-medium text-muted-foreground">Upload, pilih gaya, lihat preview</p>
                     </div>
                   </div>
                 </Panel>
@@ -115,19 +129,19 @@ export default function Home() {
 
           <section className="mt-8">
             <div className="flex items-center justify-between gap-3">
-              <h2 className="text-xs font-bold uppercase text-muted-foreground">Your workspace</h2>
+              <h2 className="text-xs font-bold uppercase text-muted-foreground">Area kreator</h2>
               <Link href="/generate/foto-produk">
-                <Button size="sm">Create new board</Button>
+                <Button size="sm">Buat foto baru</Button>
               </Link>
             </div>
             <Panel className="mt-4 p-4">
               <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
                 <div>
-                  <p className="font-bold">Editins Workspace</p>
-                  <p className="mt-1 text-sm font-medium text-muted-foreground">Frontend MVP only, ready for Laravel API connection.</p>
+                  <p className="font-bold">Editins Studio</p>
+                  <p className="mt-1 text-sm font-medium text-muted-foreground">Ruang kerja praktis untuk foto produk dan materi promosi.</p>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  {["Boards", "Members", "Settings"].map((item) => (
+                  {["Foto", "Kredit", "Pengaturan"].map((item) => (
                     <Button key={item} size="sm" variant="outline">{item}</Button>
                   ))}
                 </div>

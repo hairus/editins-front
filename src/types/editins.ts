@@ -1,4 +1,4 @@
-export type FeatureSlug = "foto-produk" | "hapus-bg" | "banner-promo";
+export type FeatureSlug = "foto-produk" | "foto-4x6" | "hapus-bg" | "banner-promo";
 
 export type GenerationStatus = "queued" | "processing" | "success" | "failed";
 
@@ -28,4 +28,3 @@ export type PricingTier = {
   description: string;
   cta: string;
 };
-
