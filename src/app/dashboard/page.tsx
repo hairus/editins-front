@@ -121,11 +121,11 @@ export default function DashboardPage() {
                 />
               </span>
               <div>
-                <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-secondary">Editins Studio</p>
-                <p className="mt-1 text-lg font-bold tracking-tight text-foreground">Foto produk praktis untuk UMKM.</p>
+                <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-secondary">Editins</p>
+                <p className="mt-1 text-lg font-bold tracking-tight text-foreground">Edit digital instan tanpa ke studio.</p>
               </div>
             </div>
-            <Badge tone="warning">Workspace aktif</Badge>
+            <Badge tone="warning">Siap bikin foto jualan</Badge>
           </div>
         </div>
         <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
