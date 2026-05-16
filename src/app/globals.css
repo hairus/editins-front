@@ -3,25 +3,102 @@
 @tailwind utilities;
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: 220 24% 96%;
+  --foreground: 222 28% 20%;
+  --card: 0 0% 100%;
+  --card-foreground: 222 28% 20%;
+  --primary: 218 72% 50%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 27 78% 48%;
+  --secondary-foreground: 0 0% 100%;
+  --accent: 215 84% 68%;
+  --accent-foreground: 0 0% 100%;
+  --muted: 220 18% 92%;
+  --muted-foreground: 222 10% 47%;
+  --success: 164 36% 43%;
+  --success-foreground: 0 0% 100%;
+  --warning: 36 75% 54%;
+  --warning-foreground: 0 0% 100%;
+  --destructive: 15 72% 52%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 220 16% 84%;
+  --input: 220 16% 78%;
+  --ring: 215 84% 68%;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+.dark {
+  --background: 222 28% 11%;
+  --foreground: 218 30% 92%;
+  --card: 222 22% 16%;
+  --card-foreground: 218 30% 92%;
+  --primary: 216 80% 67%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 28 80% 55%;
+  --secondary-foreground: 0 0% 100%;
+  --accent: 214 76% 70%;
+  --accent-foreground: 0 0% 100%;
+  --muted: 222 18% 22%;
+  --muted-foreground: 220 16% 70%;
+  --success: 164 45% 55%;
+  --success-foreground: 222 28% 11%;
+  --warning: 36 85% 60%;
+  --warning-foreground: 222 28% 11%;
+  --destructive: 15 78% 60%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 222 15% 28%;
+  --input: 222 15% 34%;
+  --ring: 214 76% 70%;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-width: 320px;
+  scroll-behavior: smooth;
 }
 
 body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  min-height: 100vh;
+  color: hsl(var(--foreground));
+  background: hsl(var(--background));
+  font-family: var(--font-geist-sans), ui-sans-serif, sans-serif;
+  letter-spacing: 0;
+}
+
+.dark body {
+  background:
+    linear-gradient(180deg, hsl(var(--background)) 0%, color-mix(in srgb, hsl(var(--background)) 88%, hsl(var(--muted))) 100%);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+::selection {
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
 }
 
 @layer utilities {
   .text-balance {
     text-wrap: balance;
+  }
+
+  .app-container {
+    @apply mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8;
+  }
+
+  .focus-ring {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring;
   }
 }
