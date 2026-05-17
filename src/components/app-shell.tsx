@@ -329,7 +329,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       <aside className="fixed bottom-0 left-0 top-12 z-30 hidden w-64 overflow-hidden border-r border-border/45 bg-[linear-gradient(180deg,hsl(var(--card)/.98),hsl(var(--background)/.94))] px-3 py-4 shadow-panel backdrop-blur-xl lg:block">
         <div className="relative z-10 h-full">
-        <div className="soft-scrollbar h-full overflow-y-auto pb-4 pr-1">
+        <div className="soft-scrollbar h-full overflow-y-auto pb-4 pr-1" data-sidebar-scroll>
         {visibleNavItems.length > 0 ? (
           <nav className="space-y-1">
             <p className="mb-2 px-3 text-[11px] font-black uppercase tracking-[0.18em] text-muted-foreground/90">Dashboard</p>
@@ -580,6 +580,7 @@ function mobileNavLinkClass(isActive: boolean) {
 }
 
 function scrollPageToTop() {
+  document.querySelector("[data-sidebar-scroll]")?.scrollTo({ top: 0, behavior: "smooth" });
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
