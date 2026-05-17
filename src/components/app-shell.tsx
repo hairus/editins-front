@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -13,13 +13,13 @@ import {
   CreditCard,
   Eraser,
   Expand,
-  HelpCircle,
   ImagePlus,
   Images,
   LayoutDashboard,
   LogOut,
   Megaphone,
   Paintbrush,
+  Puzzle,
   ScanFace,
   Search,
   Settings2,
@@ -52,7 +52,9 @@ const guestNavItems = [
 
 const productNavItems = [
   { href: "/generate", label: "Pilih Produk", icon: Sparkles },
+  { href: "/addons", label: "Addon", icon: Puzzle },
   { href: "/billing", label: "Langganan", icon: CreditCard },
+  { href: "/affiliate", label: "Referral", icon: UserRound },
   { href: "/dashboard/settings", label: "Pengaturan", icon: Settings2 },
 ];
 
@@ -60,27 +62,27 @@ const studioFeatureSections = [
   {
     title: "EDIT & GABUNG",
     items: [
-      { href: "/generate/gabung-foto", label: "Gabung Foto", icon: ImagePlus, badge: "Pro" },
-      { href: "/generate/foto-miniatur", label: "Foto Miniatur", icon: Images, badge: "Pro" },
-      { href: "/generate/perluas-foto", label: "Perluas Foto", icon: Expand, badge: "Pro" },
-      { href: "/generate/edit-foto", label: "Edit Foto", icon: Paintbrush, badge: "Pro" },
-      { href: "/generate/perbaiki-foto", label: "Perbaiki Foto", icon: Wand2, badge: "Pro" },
-      { href: "/generate/face-swap", label: "Face Swap", icon: ScanFace, badge: "Pro" },
-      { href: "/generate/foto-artis", label: "Foto Artis", icon: Star, badge: "Pro" },
-      { href: "/generate/hapus-bg", label: "Hapus BG", icon: Eraser, badge: "Aktif" },
-      { href: "/generate/foto-4x6", label: "Pas Foto", icon: BadgeCheck, badge: "Beta" },
+      { href: "/generate/gabung-foto", label: "Gabung Foto", icon: ImagePlus },
+      { href: "/generate/foto-miniatur", label: "Foto Miniatur", icon: Images },
+      { href: "/generate/perluas-foto", label: "Perluas Foto", icon: Expand },
+      { href: "/generate/edit-foto", label: "Edit Foto", icon: Paintbrush },
+      { href: "/generate/perbaiki-foto", label: "Perbaiki Foto", icon: Wand2 },
+      { href: "/generate/face-swap", label: "Face Swap", icon: ScanFace },
+      { href: "/generate/foto-artis", label: "Foto Artis", icon: Star },
+      { href: "/generate/hapus-bg", label: "Hapus BG", icon: Eraser },
+      { href: "/generate/foto-4x6", label: "Pas Foto", icon: BadgeCheck },
     ],
   },
   {
     title: "PRODUK & PROMOSI",
     items: [
-      { href: "/generate/foto-produk", label: "Foto Produk", icon: Camera, badge: "Aktif" },
-      { href: "/generate/foto-fashion", label: "Foto Fashion", icon: Shirt, badge: "Pro" },
-      { href: "/generate/buat-mockup", label: "Buat Mockup", icon: LayoutDashboard, badge: "Pro" },
-      { href: "/generate/banner-promo", label: "Buat Banner", icon: Megaphone, badge: "Aktif" },
-      { href: "/generate/carousel-marketplace", label: "Buat Carousel", icon: Images, badge: "Pro" },
-      { href: "/generate/pov-tangan", label: "POV Tangan", icon: UserRound, badge: "Pro" },
-      { href: "/generate/foto-makanan", label: "Foto Makanan", icon: Utensils, badge: "Pro" },
+      { href: "/generate/foto-produk", label: "Foto Produk", icon: Camera },
+      { href: "/generate/foto-fashion", label: "Foto Fashion", icon: Shirt },
+      { href: "/generate/buat-mockup", label: "Buat Mockup", icon: LayoutDashboard },
+      { href: "/generate/banner-promo", label: "Buat Banner", icon: Megaphone },
+      { href: "/generate/carousel-marketplace", label: "Buat Carousel", icon: Images },
+      { href: "/generate/pov-tangan", label: "POV Tangan", icon: UserRound },
+      { href: "/generate/foto-makanan", label: "Foto Makanan", icon: Utensils },
     ],
   },
 ] as const;
@@ -98,10 +100,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { user, isLoading, logout } = useAuth();
   const { products } = useProductCatalog();
+  const sidebarScrollRef = useRef<HTMLDivElement | null>(null);
   const [isNotificationOpen, setNotificationOpen] = useState(false);
   const [isAccountOpen, setAccountOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [isSearchFocused, setSearchFocused] = useState(false);
+  const [isMobileSearchFocused, setMobileSearchFocused] = useState(false);
   const [hasUnreadNotification, setHasUnreadNotification] = useState(false);
   const [liveNotifications, setLiveNotifications] = useState<NotificationItem[]>([]);
   const displayName = user ? titleCaseName(user.name) : "";
@@ -119,8 +123,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           .join(" ")
           .toLowerCase()
           .includes(normalizedTerm);
-      })
-      .slice(0, 5);
+      });
   }, [products, searchTerm]);
   const notifications = useMemo<NotificationItem[]>(
     () => [
@@ -175,6 +178,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         ].slice(0, 5),
       );
       setHasUnreadNotification(true);
+      setNotificationOpen(true);
     }
 
     window.addEventListener("editins:notify", handleNotification);
@@ -191,6 +195,26 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       document.body.style.overflow = "";
     };
   }, [isNotificationOpen]);
+
+  useEffect(() => {
+    const savedScrollTop = window.sessionStorage.getItem("editins-sidebar-scroll-top");
+
+    if (!savedScrollTop) return;
+
+    window.setTimeout(() => {
+      if (sidebarScrollRef.current) {
+        sidebarScrollRef.current.scrollTop = Number(savedScrollTop);
+      }
+    }, 0);
+  }, [pathname]);
+
+  function handleMenuClick() {
+    if (sidebarScrollRef.current) {
+      window.sessionStorage.setItem("editins-sidebar-scroll-top", String(sidebarScrollRef.current.scrollTop));
+    }
+
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
 
   return (
     <div className="min-h-screen bg-transparent">
@@ -209,7 +233,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 onFocus={() => setSearchFocused(true)}
               />
               {isSearchFocused && searchSuggestions.length > 0 ? (
-                <div className="absolute left-0 right-0 top-10 z-50 overflow-hidden rounded-ui border border-border/65 bg-card shadow-panel">
+                <div className="soft-scrollbar absolute left-0 right-0 top-10 z-50 max-h-[70vh] overflow-y-auto rounded-ui border border-border/65 bg-card shadow-panel">
                   {searchSuggestions.map((product) => (
                     <Link
                       key={product.slug}
@@ -251,9 +275,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     : "absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-warning ring-2 ring-card"
                 }
               />
-            </button>
-            <button className="grid h-8 w-8 place-items-center rounded-ui text-muted-foreground transition hover:bg-muted hover:text-foreground" aria-label="Bantuan">
-              <HelpCircle className="h-4 w-4" />
             </button>
             {user ? (
               <div className="relative flex items-center gap-1.5">
@@ -327,9 +348,45 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
       </header>
 
+      <div className="fixed inset-x-0 top-12 z-30 border-b border-border/35 bg-card/95 px-3 py-2 backdrop-blur md:hidden">
+        <label className="relative block">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <input
+            className="h-10 w-full rounded-ui border border-input/60 bg-background/70 pl-9 pr-3 text-sm font-semibold outline-none transition placeholder:text-muted-foreground focus:border-primary focus:ring-1 focus:ring-ring"
+            placeholder="Cari studio / foto 4x6"
+            value={searchTerm}
+            onBlur={() => window.setTimeout(() => setMobileSearchFocused(false), 120)}
+            onChange={(event) => setSearchTerm(event.target.value)}
+            onFocus={() => setMobileSearchFocused(true)}
+          />
+          {isMobileSearchFocused && searchSuggestions.length > 0 ? (
+            <div className="soft-scrollbar absolute left-0 right-0 top-12 z-50 max-h-[62vh] overflow-y-auto rounded-ui border border-border/65 bg-card shadow-panel">
+              {searchSuggestions.map((product) => (
+                <Link
+                  key={product.slug}
+                  className="flex items-center justify-between gap-3 px-3 py-2.5 text-sm transition hover:bg-muted"
+                  href={`/generate/${product.slug}`}
+                  onClick={() => {
+                    setSearchTerm("");
+                    setMobileSearchFocused(false);
+                    handleMenuClick();
+                  }}
+                >
+                  <span className="min-w-0">
+                    <span className="block truncate font-semibold">{product.shortTitle}</span>
+                    <span className="block truncate text-xs font-medium text-muted-foreground">{product.output}</span>
+                  </span>
+                  <Badge tone={product.credits > 1 ? "warning" : "success"}>{product.credits} kredit</Badge>
+                </Link>
+              ))}
+            </div>
+          ) : null}
+        </label>
+      </div>
+
       <aside className="fixed bottom-0 left-0 top-12 z-30 hidden w-64 overflow-hidden border-r border-border/45 bg-[linear-gradient(180deg,hsl(var(--card)/.98),hsl(var(--background)/.94))] px-3 py-4 shadow-panel backdrop-blur-xl lg:block">
         <div className="relative z-10 h-full">
-        <div className="soft-scrollbar h-full overflow-y-auto pb-4 pr-1" data-sidebar-scroll>
+        <div ref={sidebarScrollRef} className="soft-scrollbar h-full overflow-y-auto pb-4 pr-1">
         {visibleNavItems.length > 0 ? (
           <nav className="space-y-1">
             <p className="mb-2 px-3 text-[11px] font-black uppercase tracking-[0.18em] text-muted-foreground/90">Dashboard</p>
@@ -341,7 +398,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   key={item.href}
                   href={item.href}
                   className={navLinkClass(isActive, "px-3")}
-                  onClick={scrollPageToTop}
+                  onClick={handleMenuClick}
                 >
                   <item.icon className="h-4 w-4" />
                   {item.label}
@@ -368,7 +425,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   key={item.href}
                   href={item.href}
                   className={navLinkClass(isActive, "px-6")}
-                  onClick={scrollPageToTop}
+                  onClick={handleMenuClick}
                 >
                   <item.icon className="h-4 w-4" />
                   {item.label}
@@ -394,20 +451,19 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                           <div key={item.label} className="flex min-h-10 items-center gap-3 rounded-ui px-3 text-sm font-semibold text-muted-foreground/75">
                             <Icon className="h-4 w-4" />
                             <span className="min-w-0 flex-1 truncate">{item.label}</span>
-                            <span className="rounded-full bg-muted px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.08em] text-muted-foreground">
-                              {item.badge}
-                            </span>
                           </div>
                         );
                       }
 
                       return (
-                        <Link key={item.href} href={item.href} className={featureNavLinkClass(isActive)} onClick={scrollPageToTop}>
+                        <Link
+                          key={item.href}
+                          href={item.href}
+                          className={featureNavLinkClass(isActive)}
+                          onClick={handleMenuClick}
+                        >
                           <Icon className="h-4 w-4" />
                           <span className="min-w-0 flex-1 truncate">{item.label}</span>
-                          <span className={isActive ? "rounded-full bg-secondary/18 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.08em] text-secondary" : "rounded-full bg-muted/80 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.08em] text-muted-foreground"}>
-                            {item.badge}
-                          </span>
                         </Link>
                       );
                     })}
@@ -422,9 +478,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
       </aside>
 
-      <main className="pt-12 lg:pl-64">
+      <main className="pt-[6.5rem] md:pt-12 lg:pl-64">
         {children}
-        <footer className="border-t border-border/45 px-4 py-5 text-center text-xs font-semibold text-muted-foreground lg:px-8">
+        <footer className="hidden border-t border-border/45 px-4 py-5 text-center text-xs font-semibold text-muted-foreground md:block lg:px-8">
           v{packageInfo.version} - Powered by Editins
         </footer>
       </main>
@@ -439,7 +495,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   key={item.href}
                   href={item.href}
                   className={mobileNavLinkClass(isActive)}
-                  onClick={scrollPageToTop}
+                  onClick={handleMenuClick}
                 >
                 <item.icon className="h-4 w-4" />
                 <span className="max-w-full truncate">{item.label}</span>
@@ -577,11 +633,6 @@ function mobileNavLinkClass(isActive: boolean) {
       ? "border border-secondary/25 bg-secondary/12 text-secondary shadow-[0_10px_22px_-18px_hsl(var(--secondary))]"
       : "text-muted-foreground hover:bg-secondary/10 hover:text-secondary",
   ].join(" ");
-}
-
-function scrollPageToTop() {
-  document.querySelector("[data-sidebar-scroll]")?.scrollTo({ top: 0, behavior: "smooth" });
-  window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
 function titleCaseName(name: string) {

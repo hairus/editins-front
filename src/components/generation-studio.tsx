@@ -70,7 +70,8 @@ export function GenerationStudio({ feature }: { feature: Feature }) {
   const isCarousel = feature.slug === "carousel-marketplace";
   const isFood = feature.slug === "foto-makanan";
   const isFashion = feature.slug === "foto-fashion";
-  const isGenerateDisabled = isGenerating || isLoading;
+  const minRequiredFiles = isProductModel ? 2 : 1;
+  const isGenerateDisabled = isGenerating || isLoading || selectedFiles.length < minRequiredFiles;
 
   useEffect(() => {
     if (selectedFiles.length === 0) {
@@ -111,29 +112,45 @@ export function GenerationStudio({ feature }: { feature: Feature }) {
 
   async function handleGenerate() {
     if (isLoading) {
-      setErrorMessage("Tunggu sebentar, akun sedang diperiksa.");
+      notifyApp({
+        title: "Akun sedang disiapkan",
+        detail: "Tunggu sebentar, kami sedang memastikan paket dan kredit Anda.",
+        tone: "warning",
+      });
       return;
     }
 
     if (!user && !isLoading) {
-      const nextUser = await refreshUser().catch(() => null);
+      setQuotaDialog({
+        message: "Pilih paket dulu agar hasil foto, kredit, dan riwayat tersimpan aman di akun Anda.",
+        upgradeUrl: "/billing",
+      });
+      return;
+    }
 
-      if (!nextUser) {
-        setQuotaDialog({
-          message: "Pilih paket langganan dulu agar hasil foto, kredit, dan riwayat tersimpan aman di akun Anda.",
-          upgradeUrl: "/billing",
-        });
-        return;
-      }
+    if (user && user.profile.credits_remaining < feature.credits) {
+      setQuotaDialog({
+        message: `Kredit aktif belum cukup untuk ${feature.shortTitle}. Pilih paket yang sesuai agar proses foto bisa dilanjutkan.`,
+        upgradeUrl: "/billing",
+      });
+      return;
     }
 
     if (isProductModel && selectedFiles.length < 2) {
-      setErrorMessage("Upload minimal 2 foto: foto produk dan foto model/referensi untuk digabung.");
+      notifyApp({
+        title: "Butuh dua foto",
+        detail: "Upload foto produk dan foto model atau referensi agar hasil gabungan terlihat natural.",
+        tone: "warning",
+      });
       return;
     }
 
     if (isPhoto46 && selectedFiles.length === 0) {
-      setErrorMessage("Upload foto wajah dulu sebelum generate Foto 4x6.");
+      notifyApp({
+        title: "Upload foto wajah dulu",
+        detail: "Pilih foto wajah yang jelas agar hasil pas foto terlihat rapi dan profesional.",
+        tone: "warning",
+      });
       return;
     }
 
@@ -170,7 +187,7 @@ export function GenerationStudio({ feature }: { feature: Feature }) {
           tone: "danger",
         });
         setQuotaDialog({
-          message: error.message || "Kuota habis. Upgrade ke Pro untuk lanjut!",
+          message: error.message || "Kredit belum cukup. Pilih paket yang sesuai untuk lanjut membuat foto.",
           upgradeUrl: error.upgradeUrl ?? "/billing",
         });
         return;
@@ -464,7 +481,7 @@ export function GenerationStudio({ feature }: { feature: Feature }) {
         <div className="mt-7 grid gap-3 sm:grid-cols-[1fr_auto]">
           <Button className="min-h-12 w-full" disabled={isGenerateDisabled} onClick={handleGenerate}>
             {isGenerating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-            {isGenerating ? "Memproses" : "Buat foto"}
+            {isGenerating ? "Memproses" : selectedFiles.length < minRequiredFiles ? "Upload foto dulu" : "Buat foto"}
           </Button>
           <Button
             className="min-h-12 w-full sm:w-12"

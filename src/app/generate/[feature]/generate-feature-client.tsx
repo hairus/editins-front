@@ -22,7 +22,7 @@ const heroCopy: Partial<Record<FeatureSlug, { title: string; accent: string; des
     description: "Upload foto mentah, pilih gaya, lalu siapkan visual katalog dengan cahaya lembut dan hasil yang rapi.",
   },
   "produk-model": {
-    title: "Gabung Foto Produk",
+    title: "Produk + Model",
     accent: "dengan Model",
     description: "Upload minimal 2 foto: produk dan model/referensi. Editins akan menggabungkan keduanya menjadi visual campaign yang natural.",
   },
@@ -141,7 +141,7 @@ export function GenerateFeatureClient({ featureSlug }: GenerateFeatureClientProp
             <Panel className="grid min-h-72 place-items-center p-6 text-center">
               <div>
                 <p className="text-sm font-semibold text-foreground">Produk belum tersedia.</p>
-                <p className="mt-2 text-sm font-medium text-muted-foreground">{error ?? "Pilih produk lain dari halaman generate."}</p>
+                <p className="mt-2 text-sm font-medium text-muted-foreground">{error ?? "Pilih produk lain yang tersedia di katalog Editins."}</p>
                 <Link className="mt-4 inline-flex" href="/generate">
                   <Button size="sm">Lihat pilihan produk</Button>
                 </Link>

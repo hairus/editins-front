@@ -49,8 +49,8 @@ const faq = [
     answer: "Untuk UMKM, reseller, dropshipper, dan seller marketplace yang butuh foto produk lebih rapi tanpa fotografer atau software desain rumit.",
   },
   {
-    question: "Apa yang bisa dibuat di MVP ini?",
-    answer: "Fokus awal sesuai PRD adalah Foto Produk Studio, Hapus Background, dan Banner Promo Marketplace.",
+    question: "Apa yang bisa dibuat sekarang?",
+    answer: "Anda bisa mulai dari Foto Produk Studio, Hapus Background, dan Banner Promo Marketplace untuk kebutuhan jualan harian.",
   },
 ];
 
@@ -172,10 +172,10 @@ export default function Home() {
         <section className="app-container mt-14">
           <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
             <div>
-              <p className="text-xs font-black uppercase tracking-[0.18em] text-secondary">Fitur MVP</p>
+              <p className="text-xs font-black uppercase tracking-[0.18em] text-secondary">Pilihan favorit seller</p>
               <h2 className="mt-2 text-3xl font-black tracking-[-0.04em] sm:text-4xl">Mulai dari 3 kebutuhan visual utama.</h2>
               <p className="mt-3 max-w-2xl text-sm font-semibold leading-6 text-muted-foreground">
-                Sesuai PRD, fase awal fokus ke foto produk, hapus background, dan banner promo marketplace.
+                Mulai dari kebutuhan visual yang paling sering dipakai seller: foto produk, hapus background, dan banner promo marketplace.
               </p>
             </div>
             <Link href="/generate">
@@ -252,7 +252,7 @@ export default function Home() {
             <p className="text-xs font-black uppercase tracking-[0.18em] text-secondary">Langganan</p>
             <h2 className="mt-2 text-3xl font-black tracking-[-0.04em] sm:text-4xl">Pilih paket sesuai ritme jualan.</h2>
             <p className="mt-3 text-sm font-semibold leading-6 text-muted-foreground">
-              Harga dan kredit mengikuti PRD MVP agar tetap terjangkau untuk UMKM.
+              Paket dibuat agar tetap terjangkau untuk UMKM yang ingin produksi visual lebih rutin.
             </p>
           </div>
           <div className="mt-7 grid gap-4 lg:grid-cols-3">

@@ -90,7 +90,7 @@ export default function DashboardPage() {
       {
         label: "Total foto",
         value: user ? String(totalHistory) : "-",
-        detail: "Semua hasil generate tersimpan",
+        detail: "Semua hasil foto tersimpan",
         tone: "activity" as const,
       },
       {

@@ -80,7 +80,7 @@ export default function BillingPage() {
         <SectionHeading
           eyebrow="Kredit"
           title="Top up kredit"
-          description="Pilih paket sesuai kebutuhan. Di mode develop, paket langsung aktif tanpa pembayaran."
+          description="Pilih paket sesuai ritme produksi foto jualan Anda. Kredit aktif otomatis setelah pembayaran berhasil."
         />
 
         {errorMessage ? (
