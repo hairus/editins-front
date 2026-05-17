@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/field";
 import { Panel } from "@/components/ui/panel";
 import { googleLoginUrl } from "@/lib/api/client";
-import { loginWithPassword, registerWithPassword } from "@/lib/api/auth";
+import { homePathForUser, isAdminUser, loginWithPassword, registerWithPassword } from "@/lib/api/auth";
 
 export default function LoginPage() {
   return (
@@ -32,7 +32,7 @@ function LoginForm() {
   const [isSubmitting, setSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const redirectTo = searchParams.get("next") || "/dashboard";
+  const redirectTo = searchParams.get("next");
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -52,7 +52,11 @@ function LoginForm() {
             });
 
       setUser(user);
-      router.push(redirectTo);
+      const fallbackPath = homePathForUser(user);
+      const nextPath = redirectTo?.startsWith("/") && !redirectTo.startsWith("//") ? redirectTo : null;
+      const nextIsAdminArea = nextPath === "/admin" || nextPath?.startsWith("/admin/");
+
+      router.push(nextPath && (!nextIsAdminArea || isAdminUser(user)) ? nextPath : fallbackPath);
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "Login gagal.");
     } finally {

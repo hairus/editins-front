@@ -9,8 +9,9 @@ import { useProductCatalog } from "@/components/product-catalog-provider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Panel } from "@/components/ui/panel";
+import type { FeatureSlug } from "@/types/editins";
 
-const featureVisuals = {
+const featureVisuals: Partial<Record<FeatureSlug, { icon: typeof Camera; label: string; tone: string }>> = {
   "foto-produk": {
     icon: Camera,
     label: "Foto Produk Studio",
@@ -195,7 +196,7 @@ export default function Home() {
               </Panel>
             ) : null}
             {mvpProducts.map((feature) => {
-              const visual = featureVisuals[feature.slug] ?? featureVisuals["foto-produk"];
+              const visual = featureVisuals[feature.slug] ?? featureVisuals["foto-produk"]!;
               const Icon = visual.icon;
 
               return (

@@ -4,6 +4,8 @@ export type AuthUser = {
   id: number;
   name: string;
   email: string;
+  role?: "user" | "admin" | string;
+  is_admin?: boolean;
   avatar_url: string | null;
   profile: {
     tier: string;
@@ -11,6 +13,14 @@ export type AuthUser = {
     affiliate_code: string;
   };
 };
+
+export function isAdminUser(user: AuthUser | null | undefined) {
+  return user?.role === "admin" || user?.is_admin === true;
+}
+
+export function homePathForUser(user: AuthUser) {
+  return isAdminUser(user) ? "/admin/dashboard" : "/dashboard";
+}
 
 type AuthPayload = {
   success?: boolean;

@@ -53,13 +53,21 @@ export function GenerationStudio({ feature }: { feature: Feature }) {
   const [selectedPreviewUrls, setSelectedPreviewUrls] = useState<string[]>([]);
   const [uploadInputKey, setUploadInputKey] = useState(0);
   const [instruction, setInstruction] = useState("");
+  const [copywriting, setCopywriting] = useState("");
+  const [callToAction, setCallToAction] = useState("");
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoPreviewUrl, setLogoPreviewUrl] = useState<string | null>(null);
+  const [logoInputKey, setLogoInputKey] = useState(0);
+  const [templateFile, setTemplateFile] = useState<File | null>(null);
+  const [templatePreviewUrl, setTemplatePreviewUrl] = useState<string | null>(null);
+  const [templateInputKey, setTemplateInputKey] = useState(0);
   const [promoText, setPromoText] = useState("");
   const [useMockMode, setUseMockMode] = useState(true);
+  const [photoLimit, setPhotoLimit] = useState(feature.slug === "foto-produk" ? 1 : 5);
   const [isGenerating, setGenerating] = useState(false);
   const [progress, setProgress] = useState(0);
   const [mode, setMode] = useState(defaults[feature.slug]);
   const [result, setResult] = useState<GenerateImageResult | null>(null);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isPreviewOpen, setPreviewOpen] = useState(false);
   const [quotaDialog, setQuotaDialog] = useState<{ message: string; upgradeUrl: string } | null>(null);
 
@@ -71,7 +79,22 @@ export function GenerationStudio({ feature }: { feature: Feature }) {
   const isFood = feature.slug === "foto-makanan";
   const isFashion = feature.slug === "foto-fashion";
   const minRequiredFiles = isProductModel ? 2 : 1;
+  const maxFiles = 5;
+  const maxSelectedFiles = feature.slug === "foto-produk" ? photoLimit : maxFiles;
   const isGenerateDisabled = isGenerating || isLoading || selectedFiles.length < minRequiredFiles;
+  const ratioOptions = feature.slug === "foto-produk"
+    ? [
+        { label: "1:1", value: "1:1 marketplace" },
+        { label: "4:5", value: "4:5 social" },
+        { label: "9:16", value: "9:16 story" },
+      ]
+    : [
+        { label: "Kotak", value: "1:1 marketplace" },
+        ...(isPhoto46 ? [{ label: "4x6", value: "4x6 portrait" }] : []),
+        { label: "Sosial", value: "4:5 social" },
+        { label: "Banner", value: "16:9 banner" },
+        { label: "Asli", value: "Original" },
+      ];
 
   useEffect(() => {
     if (selectedFiles.length === 0) {
@@ -84,6 +107,30 @@ export function GenerationStudio({ feature }: { feature: Feature }) {
 
     return () => objectUrls.forEach((objectUrl) => URL.revokeObjectURL(objectUrl));
   }, [selectedFiles]);
+
+  useEffect(() => {
+    if (!logoFile) {
+      setLogoPreviewUrl(null);
+      return;
+    }
+
+    const objectUrl = URL.createObjectURL(logoFile);
+    setLogoPreviewUrl(objectUrl);
+
+    return () => URL.revokeObjectURL(objectUrl);
+  }, [logoFile]);
+
+  useEffect(() => {
+    if (!templateFile) {
+      setTemplatePreviewUrl(null);
+      return;
+    }
+
+    const objectUrl = URL.createObjectURL(templateFile);
+    setTemplatePreviewUrl(objectUrl);
+
+    return () => URL.revokeObjectURL(objectUrl);
+  }, [templateFile]);
 
   useEffect(() => {
     if (!isPreviewOpen && !quotaDialog) return;
@@ -103,6 +150,17 @@ export function GenerationStudio({ feature }: { feature: Feature }) {
       window.removeEventListener("keydown", handleKeyDown);
     };
   }, [isPreviewOpen, quotaDialog]);
+
+  useEffect(() => {
+    if (selectedFiles.length <= maxSelectedFiles) return;
+
+    setSelectedFiles((current) => current.slice(0, maxSelectedFiles));
+    notifyApp({
+      title: `Jumlah foto ${maxSelectedFiles}`,
+      detail: `Upload disesuaikan dengan jumlah foto yang dipilih di UI.`,
+      tone: "warning",
+    });
+  }, [maxSelectedFiles, selectedFiles.length]);
 
   const previewLabel = useMemo(() => {
     if (isRemoveBg) return "PNG transparan";
@@ -157,7 +215,6 @@ export function GenerationStudio({ feature }: { feature: Feature }) {
     const preparedInstruction = buildInstruction();
 
     setGenerating(true);
-    setErrorMessage(null);
     setQuotaDialog(null);
     setResult(null);
     setPreviewOpen(false);
@@ -174,6 +231,8 @@ export function GenerationStudio({ feature }: { feature: Feature }) {
         aspectRatio: aspectRatioFor(mode.ratio),
         mockMode: useMockMode,
         images: selectedFiles,
+        logoImage: feature.slug === "foto-produk" ? logoFile : null,
+        templateImage: feature.slug === "foto-produk" ? templateFile : null,
       });
 
       setProgress(100);
@@ -199,7 +258,6 @@ export function GenerationStudio({ feature }: { feature: Feature }) {
         detail: message,
         tone: "danger",
       });
-      setErrorMessage(message);
     } finally {
       window.clearInterval(timer);
       window.setTimeout(() => setGenerating(false), 350);
@@ -207,11 +265,55 @@ export function GenerationStudio({ feature }: { feature: Feature }) {
   }
 
   function handleFileChange(fileList: FileList | null) {
-    const files = Array.from(fileList ?? []).slice(0, 5);
+    const incomingFiles = Array.from(fileList ?? []);
+    const files = incomingFiles.slice(0, maxSelectedFiles);
+
+    if (incomingFiles.length > maxSelectedFiles) {
+      notifyApp({
+        title: `Maksimal ${maxSelectedFiles} foto`,
+        detail: `${feature.shortTitle} mengikuti jumlah foto yang dipilih di UI. Foto tambahan tidak dimasukkan.`,
+        tone: "warning",
+      });
+    }
 
     setSelectedFiles(files);
     setResult(null);
-    setErrorMessage(null);
+    setQuotaDialog(null);
+  }
+
+  function handleLogoChange(fileList: FileList | null) {
+    const file = fileList?.[0] ?? null;
+
+    if (file && !file.type.startsWith("image/")) {
+      notifyApp({
+        title: "Logo harus gambar",
+        detail: "Upload logo dalam format JPG, PNG, atau WebP agar bisa dipakai di visual produk.",
+        tone: "warning",
+      });
+      setLogoInputKey((current) => current + 1);
+      return;
+    }
+
+    setLogoFile(file);
+    setResult(null);
+    setQuotaDialog(null);
+  }
+
+  function handleTemplateChange(fileList: FileList | null) {
+    const file = fileList?.[0] ?? null;
+
+    if (file && !file.type.startsWith("image/")) {
+      notifyApp({
+        title: "Template harus gambar",
+        detail: "Upload template dalam format JPG, PNG, atau WebP sebagai referensi layout visual.",
+        tone: "warning",
+      });
+      setTemplateInputKey((current) => current + 1);
+      return;
+    }
+
+    setTemplateFile(file);
+    setResult(null);
     setQuotaDialog(null);
   }
 
@@ -220,12 +322,35 @@ export function GenerationStudio({ feature }: { feature: Feature }) {
     setUploadInputKey((current) => current + 1);
     setResult(null);
     setPreviewOpen(false);
-    setErrorMessage(null);
     setQuotaDialog(null);
+  }
+
+  function handleRemoveLogo() {
+    setLogoFile(null);
+    setLogoInputKey((current) => current + 1);
+    setResult(null);
+  }
+
+  function handleRemoveTemplate() {
+    setTemplateFile(null);
+    setTemplateInputKey((current) => current + 1);
+    setResult(null);
   }
 
   function buildInstruction() {
     const baseInstruction = instruction.trim() || defaultInstructionFor(feature.slug);
+
+    if (feature.slug === "foto-produk") {
+      return [
+        baseInstruction,
+        copywriting.trim() ? `Copywriting to include: ${copywriting.trim()}` : "No extra copywriting unless it improves the ecommerce layout.",
+        callToAction.trim() ? `Call to action text: ${callToAction.trim()}` : "No call to action text unless needed.",
+        logoFile ? "A separate logo image is provided as the final reference. Place it subtly and keep the logo accurate." : "No logo image provided.",
+        `Reference image order: images 1-${selectedFiles.length} are product photos.${logoFile ? ` Image ${selectedFiles.length + 1} is the logo.` : ""}${templateFile ? ` Image ${selectedFiles.length + (logoFile ? 2 : 1)} is the template layout reference.` : ""}`,
+        templateFile ? "Template reference is the main layout blueprint/acuan utama, not just inspiration. Recreate the uploaded template structure as closely as possible: same composition, subject position, crop, text placement, spacing, color mood, visual hierarchy, poster structure, and background style. Replace only the template product/subject with the uploaded product while keeping the template design logic." : "No template reference image provided.",
+        `Use ${selectedFiles.length} product photo reference(s). Selected style: ${mode.style}. Ratio: ${mode.ratio}.`,
+      ].join("\n");
+    }
 
     if (isProductModel) {
       return [
@@ -340,7 +465,32 @@ export function GenerationStudio({ feature }: { feature: Feature }) {
         </div>
 
         <div className="mt-6 space-y-6">
-          <StudioStep number={1} title="Bahan gambar" meta={isProductModel ? "Min 2, max 5" : "Max 5"}>
+          <StudioStep number={1} title="Bahan gambar" meta={isProductModel ? `Min 2, max ${maxFiles}` : feature.slug === "foto-produk" ? `${photoLimit} foto` : `Max ${maxFiles}`}>
+            {feature.slug === "foto-produk" ? (
+              <div className="mb-3 rounded-ui border border-border/55 bg-background/55 p-3">
+                <div className="mb-2 flex items-center justify-between gap-3">
+                  <p className="text-xs font-black uppercase tracking-[0.14em] text-muted-foreground">Jumlah foto</p>
+                  <span className="text-xs font-bold text-primary">Maks 5</span>
+                </div>
+                <div className="grid grid-cols-5 gap-2">
+                  {[1, 2, 3, 4, 5].map((count) => (
+                    <button
+                      key={count}
+                      type="button"
+                      aria-pressed={photoLimit === count}
+                      className={
+                        photoLimit === count
+                          ? "min-h-9 rounded-ui border border-primary/15 bg-primary px-2 text-xs font-black text-primary-foreground shadow-soft"
+                          : "min-h-9 rounded-ui border border-border/45 bg-card/80 px-2 text-xs font-black text-muted-foreground transition hover:bg-muted hover:text-foreground"
+                      }
+                      onClick={() => setPhotoLimit(count)}
+                    >
+                      {count}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : null}
             <div className="relative">
               <label className="grid min-h-24 cursor-pointer place-items-center overflow-hidden rounded-ui border border-dashed border-input/70 bg-background/75 p-3 text-center transition hover:border-primary/45 hover:bg-primary/5">
                 <input
@@ -406,7 +556,96 @@ export function GenerationStudio({ feature }: { feature: Feature }) {
             </StudioStep>
           ) : null}
 
-          <StudioStep number={isBanner ? 3 : 2} title="Instruksi visual">
+          {feature.slug === "foto-produk" ? (
+            <StudioStep number={2} title="Materi jualan">
+              <div className="grid gap-3">
+                <Input
+                  id="copywriting"
+                  maxLength={120}
+                  placeholder="Contoh: Kulit lembut, nyaman dipakai seharian"
+                  value={copywriting}
+                  onChange={(event) => setCopywriting(event.target.value)}
+                />
+                <Input
+                  id="call-to-action"
+                  maxLength={40}
+                  placeholder="Contoh: Beli Sekarang"
+                  value={callToAction}
+                  onChange={(event) => setCallToAction(event.target.value)}
+                />
+                <div className="relative">
+                  <label className="grid min-h-20 cursor-pointer place-items-center overflow-hidden rounded-ui border border-dashed border-input/70 bg-background/75 p-3 text-center transition hover:border-primary/45 hover:bg-primary/5">
+                    <input
+                      key={logoInputKey}
+                      className="sr-only"
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp"
+                      onChange={(event) => handleLogoChange(event.target.files)}
+                    />
+                    {logoPreviewUrl ? (
+                      <span className="grid w-full place-items-center gap-2">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={logoPreviewUrl} alt="Preview logo" className="max-h-20 w-auto object-contain" />
+                        <span className="text-xs font-semibold text-muted-foreground">Logo brand</span>
+                      </span>
+                    ) : (
+                      <span className="grid place-items-center gap-2 text-xs font-semibold text-muted-foreground">
+                        <ImageIcon className="h-5 w-5" />
+                        Upload logo brand opsional
+                      </span>
+                    )}
+                  </label>
+                  {logoPreviewUrl ? (
+                    <button
+                      type="button"
+                      className="absolute right-2 top-2 grid h-8 w-8 place-items-center rounded-ui border border-destructive/20 bg-background/90 text-destructive shadow-soft transition hover:bg-destructive hover:text-destructive-foreground"
+                      title="Hapus logo"
+                      aria-label="Hapus logo"
+                      onClick={handleRemoveLogo}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  ) : null}
+                </div>
+                <div className="relative">
+                  <label className="grid min-h-24 cursor-pointer place-items-center overflow-hidden rounded-ui border border-dashed border-input/70 bg-background/75 p-3 text-center transition hover:border-primary/45 hover:bg-primary/5">
+                    <input
+                      key={templateInputKey}
+                      className="sr-only"
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp"
+                      onChange={(event) => handleTemplateChange(event.target.files)}
+                    />
+                    {templatePreviewUrl ? (
+                      <span className="grid w-full place-items-center gap-2">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={templatePreviewUrl} alt="Preview template" className="max-h-28 w-auto object-contain" />
+                        <span className="text-xs font-semibold text-muted-foreground">Template acuan utama</span>
+                      </span>
+                    ) : (
+                      <span className="grid place-items-center gap-2 text-xs font-semibold text-muted-foreground">
+                        <ImageUp className="h-5 w-5" />
+                        Upload template acuan opsional
+                      </span>
+                    )}
+                  </label>
+                  {templatePreviewUrl ? (
+                    <button
+                      type="button"
+                      className="absolute right-2 top-2 grid h-8 w-8 place-items-center rounded-ui border border-destructive/20 bg-background/90 text-destructive shadow-soft transition hover:bg-destructive hover:text-destructive-foreground"
+                      title="Hapus template"
+                      aria-label="Hapus template"
+                      onClick={handleRemoveTemplate}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  ) : null}
+                </div>
+              </div>
+            </StudioStep>
+          ) : null}
+
+          <StudioStep number={isBanner ? 3 : feature.slug === "foto-produk" ? 3 : 2} title="Instruksi visual">
             <div className="relative">
               <Textarea
                 className="min-h-32 pb-11 soft-scrollbar"
@@ -427,7 +666,7 @@ export function GenerationStudio({ feature }: { feature: Feature }) {
             </div>
           </StudioStep>
 
-          <StudioStep number={isBanner ? 4 : 3} title="Gaya visual dan rasio">
+          <StudioStep number={isBanner ? 4 : feature.slug === "foto-produk" ? 4 : 3} title="Gaya visual dan rasio">
             <div className="grid gap-3">
               <div className="grid grid-cols-2 gap-2 rounded-ui border border-border/65 bg-background/75 p-1.5 sm:grid-cols-3">
                 {styleOptions.map((style) => (
@@ -453,13 +692,7 @@ export function GenerationStudio({ feature }: { feature: Feature }) {
                     : "grid grid-cols-4 gap-2 rounded-ui border border-border/65 bg-background/75 p-1.5"
                 }
               >
-                {[
-                  { label: "Kotak", value: "1:1 marketplace" },
-                  ...(isPhoto46 ? [{ label: "4x6", value: "4x6 portrait" }] : []),
-                  { label: "Sosial", value: "4:5 social" },
-                  { label: "Banner", value: "16:9 banner" },
-                  { label: "Asli", value: "Original" },
-                ].map((ratio) => (
+                {ratioOptions.map((ratio) => (
                   <button
                     key={ratio.value}
                     type="button"
@@ -491,10 +724,15 @@ export function GenerationStudio({ feature }: { feature: Feature }) {
               setSelectedFiles([]);
               setUploadInputKey((current) => current + 1);
               setInstruction("");
+              setCopywriting("");
+              setCallToAction("");
+              setLogoFile(null);
+              setLogoInputKey((current) => current + 1);
+              setTemplateFile(null);
+              setTemplateInputKey((current) => current + 1);
               setPromoText("");
               setResult(null);
               setPreviewOpen(false);
-              setErrorMessage(null);
               setQuotaDialog(null);
               setProgress(0);
             }}
@@ -502,12 +740,6 @@ export function GenerationStudio({ feature }: { feature: Feature }) {
             <RotateCcw className="h-4 w-4" />
           </Button>
         </div>
-
-        {errorMessage ? (
-          <div className="mt-4 rounded-ui border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive">
-            {errorMessage}
-          </div>
-        ) : null}
       </Panel>
 
       <Panel className="overflow-hidden border-border/70 bg-card shadow-soft">
@@ -680,6 +912,7 @@ function aspectRatioFor(ratio: string) {
   if (ratio === "4x6 portrait") return "2:3";
   if (ratio.startsWith("1:1")) return "1:1";
   if (ratio.startsWith("4:5")) return "4:5";
+  if (ratio.startsWith("9:16")) return "9:16";
   if (ratio.startsWith("16:9")) return "16:9";
   return null;
 }

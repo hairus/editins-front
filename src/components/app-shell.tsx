@@ -6,6 +6,8 @@ import { usePathname } from "next/navigation";
 import {
   AlertTriangle,
   BadgeCheck,
+  Banknote,
+  BarChart3,
   Bell,
   Camera,
   ChevronDown,
@@ -15,6 +17,7 @@ import {
   Expand,
   ImagePlus,
   Images,
+  Fingerprint,
   LayoutDashboard,
   LogOut,
   Megaphone,
@@ -23,11 +26,13 @@ import {
   ScanFace,
   Search,
   Settings2,
+  ShieldCheck,
   Shirt,
   Sparkles,
   Star,
   Utensils,
   Wand2,
+  WalletCards,
   X,
   UserRound,
 } from "lucide-react";
@@ -57,6 +62,17 @@ const productNavItems = [
   { href: "/affiliate", label: "Referral", icon: UserRound },
   { href: "/dashboard/settings", label: "Pengaturan", icon: Settings2 },
 ];
+
+const adminNavItems = [
+  { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/admin/revenue", label: "Pendapatan", icon: BarChart3 },
+  { href: "/admin/generations", label: "Generations", icon: Camera },
+  { href: "/admin/provenance", label: "Provenance", icon: Fingerprint },
+  { href: "/admin/users", label: "Users", icon: UserRound },
+  { href: "/admin/payments", label: "Payments", icon: Banknote },
+  { href: "/admin/affiliate", label: "Affiliate", icon: WalletCards },
+  { href: "/admin/settings", label: "Settings", icon: Settings2 },
+] as const;
 
 const studioFeatureSections = [
   {
@@ -109,9 +125,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [hasUnreadNotification, setHasUnreadNotification] = useState(false);
   const [liveNotifications, setLiveNotifications] = useState<NotificationItem[]>([]);
   const displayName = user ? titleCaseName(user.name) : "";
+  const isAdmin = user?.role === "admin" || user?.is_admin === true;
+  const isAdminArea = pathname === "/admin" || pathname.startsWith("/admin/");
   const visibleNavItems = user ? navItems : guestNavItems;
   const visibleProductNavItems = user ? productNavItems : productNavItems.filter((item) => item.href === "/generate" || item.href === "/billing");
-  const mobileNavItems = user ? navItems : visibleProductNavItems;
+  const mobileNavItems = isAdmin ? [...navItems, { href: "/admin/dashboard", label: "Admin", icon: ShieldCheck }] : user ? navItems : visibleProductNavItems;
   const searchSuggestions = useMemo(() => {
     const normalizedTerm = searchTerm.trim().toLowerCase();
 
@@ -218,6 +236,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen bg-transparent">
+      <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden" aria-hidden="true">
+        <div className="absolute -left-28 top-20 h-80 w-80 rounded-full bg-secondary/18 blur-3xl dark:bg-secondary/8" />
+        <div className="absolute right-[-9rem] top-28 h-96 w-96 rounded-full bg-primary/16 blur-3xl dark:bg-primary/9" />
+        <div className="absolute bottom-24 left-[18%] h-72 w-72 rounded-full bg-accent/20 blur-3xl dark:bg-accent/7" />
+        <div className="absolute inset-0 opacity-[0.065] [background-image:radial-gradient(currentColor_1px,transparent_1px)] [background-size:22px_22px] text-foreground dark:opacity-[0.045]" />
+        <div className="absolute left-[56%] top-24 h-36 w-52 rotate-12 rounded-[2rem] border border-primary/18 bg-card/22 shadow-soft dark:border-white/10 dark:bg-card/10" />
+        <div className="absolute bottom-44 right-[10%] h-28 w-44 -rotate-6 rounded-[1.6rem] border border-secondary/28 bg-secondary/10 shadow-soft dark:border-secondary/15 dark:bg-secondary/5" />
+      </div>
       <header className="fixed inset-x-0 top-0 z-40 border-b border-border/35 bg-card/95 backdrop-blur">
         <div className="flex h-12 items-center gap-3 px-3">
           <Brand />
@@ -299,8 +325,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                       <Badge className="mt-2" tone="success">
                         {tierMarketingLabel(user.profile.tier)}
                       </Badge>
+                      {isAdmin ? <Badge className="ml-2 mt-2" tone="accent">Admin</Badge> : null}
                     </div>
                     <div className="grid p-1.5">
+                      {isAdmin ? <MenuLink href="/admin/dashboard" icon={ShieldCheck} label="Admin panel" onClick={() => setAccountOpen(false)} /> : null}
                       <MenuLink href="/dashboard/settings" icon={Settings2} label="Pengaturan akun" onClick={() => setAccountOpen(false)} />
                       <button
                         className="flex min-h-10 items-center gap-3 rounded-ui px-3 text-left text-sm font-semibold text-destructive transition hover:bg-destructive/10"
@@ -387,6 +415,36 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <aside className="fixed bottom-0 left-0 top-12 z-30 hidden w-64 overflow-hidden border-r border-border/45 bg-[linear-gradient(180deg,hsl(var(--card)/.98),hsl(var(--background)/.94))] px-3 py-4 shadow-panel backdrop-blur-xl lg:block">
         <div className="relative z-10 h-full">
         <div ref={sidebarScrollRef} className="soft-scrollbar h-full overflow-y-auto pb-4 pr-1">
+        {isAdminArea ? (
+          <nav className="space-y-1">
+            <p className="mb-2 px-3 text-[11px] font-black uppercase tracking-[0.18em] text-muted-foreground/90">Admin</p>
+            <div className="mb-3 rounded-[1rem] border border-primary/25 bg-primary/10 px-3 py-2 text-sm font-black text-primary">
+              Editins Internal Control
+            </div>
+            {adminNavItems.map((item) => {
+              const isActive = isActiveHref(pathname, item.href);
+
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={navLinkClass(isActive, "px-3")}
+                  onClick={handleMenuClick}
+                >
+                  <item.icon className="h-4 w-4" />
+                  {item.label}
+                </Link>
+              );
+            })}
+            <div className="mt-4 border-t border-border/35 pt-4">
+              <Link href="/dashboard" className={navLinkClass(false, "px-3")} onClick={handleMenuClick}>
+                <LayoutDashboard className="h-4 w-4" />
+                Kembali ke aplikasi
+              </Link>
+            </div>
+          </nav>
+        ) : (
+          <>
         {visibleNavItems.length > 0 ? (
           <nav className="space-y-1">
             <p className="mb-2 px-3 text-[11px] font-black uppercase tracking-[0.18em] text-muted-foreground/90">Dashboard</p>
@@ -443,17 +501,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   <p className="px-3 text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground/85">{section.title}</p>
                   <nav className="mt-1.5 space-y-0.5">
                     {section.items.map((item) => {
-                      const isActive = "href" in item && item.href ? isActiveHref(pathname, item.href) : false;
+                      const isActive = isActiveHref(pathname, item.href);
                       const Icon = item.icon;
-
-                      if (!("href" in item) || !item.href) {
-                        return (
-                          <div key={item.label} className="flex min-h-10 items-center gap-3 rounded-ui px-3 text-sm font-semibold text-muted-foreground/75">
-                            <Icon className="h-4 w-4" />
-                            <span className="min-w-0 flex-1 truncate">{item.label}</span>
-                          </div>
-                        );
-                      }
 
                       return (
                         <Link
@@ -473,12 +522,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </div>
           </div>
         ) : null}
+          </>
+        )}
         </div>
 
         </div>
       </aside>
 
-      <main className="pt-[6.5rem] md:pt-12 lg:pl-64">
+      <main className="relative z-10 pt-[6.5rem] md:pt-12 lg:pl-64">
         {children}
         <footer className="hidden border-t border-border/45 px-4 py-5 text-center text-xs font-semibold text-muted-foreground md:block lg:px-8">
           v{packageInfo.version} - Powered by Editins
