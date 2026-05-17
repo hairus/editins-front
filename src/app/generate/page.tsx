@@ -49,7 +49,7 @@ export default function GenerateIndexPage() {
 
   return (
     <AppShell>
-      <AuthRequired>
+      <AuthRequired allowGuest>
         <section className="app-container pb-24 pt-8">
         <div className="mx-auto max-w-3xl text-center">
           <SectionHeading

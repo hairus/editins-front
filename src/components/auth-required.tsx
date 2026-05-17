@@ -8,7 +8,7 @@ import { useAuth } from "@/components/auth-provider";
 import { Button } from "@/components/ui/button";
 import { Panel } from "@/components/ui/panel";
 
-export function AuthRequired({ children }: { children: React.ReactNode }) {
+export function AuthRequired({ allowGuest = false, children }: { allowGuest?: boolean; children: React.ReactNode }) {
   const { user, isLoading } = useAuth();
   const pathname = usePathname();
   const loginHref = `/login?next=${encodeURIComponent(pathname)}`;
@@ -31,7 +31,7 @@ export function AuthRequired({ children }: { children: React.ReactNode }) {
     );
   }
 
-  if (!user) {
+  if (!user && !allowGuest) {
     return (
       <section className="app-container grid min-h-[calc(100vh-4rem)] place-items-center pb-24 pt-8">
         <Panel className="w-full max-w-md p-6 text-center">

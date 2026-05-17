@@ -53,7 +53,7 @@ export function GenerationStudio({ feature }: { feature: Feature }) {
   const isBanner = feature.slug === "banner-promo";
   const isPhoto46 = feature.slug === "foto-4x6";
   const isRemoveBg = feature.slug === "hapus-bg";
-  const isGenerateDisabled = isGenerating || isLoading || !user;
+  const isGenerateDisabled = isGenerating || isLoading;
 
   useEffect(() => {
     if (!selectedFile) {
@@ -102,7 +102,10 @@ export function GenerationStudio({ feature }: { feature: Feature }) {
       const nextUser = await refreshUser().catch(() => null);
 
       if (!nextUser) {
-        setErrorMessage("Masuk dulu untuk membuat foto dan menyimpan riwayat.");
+        setQuotaDialog({
+          message: "Pilih paket langganan dulu agar hasil foto, kredit, dan riwayat tersimpan aman di akun Anda.",
+          upgradeUrl: "/billing",
+        });
         return;
       }
     }
@@ -376,7 +379,7 @@ export function GenerationStudio({ feature }: { feature: Feature }) {
         <div className="mt-7 grid gap-3 sm:grid-cols-[1fr_auto]">
           <Button className="min-h-12 w-full" disabled={isGenerateDisabled} onClick={handleGenerate}>
             {isGenerating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-            {isGenerating ? "Memproses" : user ? "Buat foto" : "Masuk dulu"}
+            {isGenerating ? "Memproses" : "Buat foto"}
           </Button>
           <Button
             className="min-h-12 w-full sm:w-12"
@@ -495,53 +498,29 @@ export function GenerationStudio({ feature }: { feature: Feature }) {
       </Panel>
       {result && isPreviewOpen ? (
         <div
-          className="fixed inset-0 z-50 grid place-items-center bg-foreground/55 p-4 backdrop-blur-md"
+          className="fixed inset-0 z-50 grid place-items-center bg-foreground/70 p-4 backdrop-blur-md"
           role="dialog"
           aria-modal="true"
           aria-labelledby="result-preview-title"
           onMouseDown={() => setPreviewOpen(false)}
         >
-          <div
-            className="grid max-h-[92vh] w-full max-w-5xl overflow-hidden rounded-ui border border-border/55 bg-card shadow-panel"
-            onMouseDown={(event) => event.stopPropagation()}
+          <h2 id="result-preview-title" className="sr-only">Preview hasil</h2>
+          <button
+            type="button"
+            className="absolute right-4 top-4 z-10 grid h-10 w-10 place-items-center rounded-full bg-background/90 text-foreground shadow-soft backdrop-blur transition hover:bg-secondary hover:text-secondary-foreground"
+            title="Tutup preview"
+            aria-label="Tutup preview"
+            onClick={() => setPreviewOpen(false)}
           >
-            <div className="flex items-center justify-between gap-3 border-b border-border/45 px-4 py-3">
-              <div className="min-w-0">
-                <h2 id="result-preview-title" className="truncate text-sm font-semibold text-foreground">
-                  Preview hasil
-                </h2>
-                <p className="mt-0.5 truncate text-xs font-medium text-muted-foreground">{result.model}</p>
-              </div>
-              <div className="flex shrink-0 items-center gap-2">
-                <a
-                  className="grid h-10 w-10 place-items-center rounded-ui border border-border/55 bg-background text-foreground transition hover:bg-primary hover:text-primary-foreground"
-                  href={result.download_url ?? result.output_url}
-                  download={`editins-${result.generation_id}.png`}
-                  title="Download foto"
-                  aria-label="Download foto"
-                >
-                  <Download className="h-4 w-4" />
-                </a>
-                <button
-                  type="button"
-                  className="grid h-10 w-10 place-items-center rounded-ui border border-border/55 bg-background text-foreground transition hover:bg-muted"
-                  title="Tutup preview"
-                  aria-label="Tutup preview"
-                  onClick={() => setPreviewOpen(false)}
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
-            </div>
-            <div className="grid min-h-0 place-items-center bg-background/60 p-3 sm:p-5">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={result.output_url}
-                alt={`Preview hasil ${feature.title}`}
-                className="max-h-[72vh] w-auto max-w-full rounded-ui object-contain shadow-soft"
-              />
-            </div>
-          </div>
+            <X className="h-5 w-5" />
+          </button>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={result.output_url}
+            alt={`Preview hasil ${feature.title}`}
+            className="max-h-[92vh] w-auto max-w-full object-contain"
+            onMouseDown={(event) => event.stopPropagation()}
+          />
         </div>
       ) : null}
       {quotaDialog ? (
@@ -573,7 +552,7 @@ export function GenerationStudio({ feature }: { feature: Feature }) {
                 </button>
               </div>
               <h2 id="quota-dialog-title" className="mt-5 text-xl font-semibold text-foreground">
-                Kuota habis
+                {user ? "Kuota habis" : "Langganan dulu"}
               </h2>
               <p className="mt-2 text-sm font-semibold leading-6 text-muted-foreground">{quotaDialog.message}</p>
             </div>
@@ -581,7 +560,7 @@ export function GenerationStudio({ feature }: { feature: Feature }) {
               <Link href={quotaDialog.upgradeUrl} onClick={() => setQuotaDialog(null)}>
                 <Button className="w-full">
                   <CreditCard className="h-4 w-4" />
-                  Upgrade ke Pro
+                  Lihat Langganan
                 </Button>
               </Link>
               <Button variant="outline" onClick={() => setQuotaDialog(null)}>

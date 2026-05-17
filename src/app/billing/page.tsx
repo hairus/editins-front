@@ -75,7 +75,7 @@ export default function BillingPage() {
 
   return (
     <AppShell>
-      <AuthRequired>
+      <AuthRequired allowGuest>
         <section className="app-container pb-24 pt-8">
         <SectionHeading
           eyebrow="Kredit"

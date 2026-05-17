@@ -24,14 +24,20 @@ const inter = Inter({
 export const metadata: Metadata = {
   metadataBase: new URL("https://editins.com"),
   title: {
-    default: "Editins - Foto Produk Praktis untuk UMKM",
+    default: "Editins - Edit Digital Instan Tanpa ke Studio",
     template: "%s | Editins",
   },
   description:
-    "Editins membantu UMKM membuat foto produk, hapus background, banner promo, top up kredit, referral, dan pantau riwayat kerja.",
+    "Edit digital instan tanpa ke studio. Editins membantu UMKM membuat foto produk, hapus background, banner promo, dan pantau riwayat hasil.",
+  icons: {
+    icon: "/logo-cropped.png",
+    shortcut: "/logo-cropped.png",
+    apple: "/logo-cropped.png",
+  },
   openGraph: {
-    title: "Editins",
-    description: "Foto produk cepat dan rapi untuk UMKM Indonesia.",
+    title: "Editins - Edit Digital Instan Tanpa ke Studio",
+    description: "Buat foto produk, hapus background, dan banner promo untuk jualan UMKM Indonesia.",
+    images: ["/logo-cropped.png"],
     siteName: "Editins",
     locale: "id_ID",
     type: "website",

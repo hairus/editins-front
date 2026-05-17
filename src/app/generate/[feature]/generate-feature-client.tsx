@@ -51,7 +51,7 @@ export function GenerateFeatureClient({ featureSlug }: GenerateFeatureClientProp
 
   return (
     <AppShell>
-      <AuthRequired>
+      <AuthRequired allowGuest>
         <section className="app-container pb-24 pt-6 sm:pt-8">
           <div className="mb-5 flex items-center justify-between gap-3">
             <Link href="/generate">

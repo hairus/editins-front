@@ -33,6 +33,10 @@ const navItems = [
   { href: "/dashboard", label: "Home", icon: LayoutDashboard },
 ];
 
+const guestNavItems = [
+  { href: "/", label: "Dashboard", icon: LayoutDashboard },
+];
+
 const productNavItems = [
   { href: "/generate", label: "Pilih Produk", icon: Sparkles },
   { href: "/billing", label: "Langganan", icon: CreditCard },
@@ -59,6 +63,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [hasUnreadNotification, setHasUnreadNotification] = useState(false);
   const [liveNotifications, setLiveNotifications] = useState<NotificationItem[]>([]);
   const displayName = user ? titleCaseName(user.name) : "";
+  const visibleNavItems = user ? navItems : guestNavItems;
+  const visibleProductNavItems = user ? productNavItems : productNavItems.filter((item) => item.href === "/generate" || item.href === "/billing");
+  const mobileNavItems = user ? navItems : visibleProductNavItems;
   const searchSuggestions = useMemo(() => {
     const normalizedTerm = searchTerm.trim().toLowerCase();
 
@@ -280,32 +287,36 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       <aside className="fixed bottom-0 left-0 top-12 z-30 hidden w-64 overflow-hidden border-r border-border/60 bg-card/96 px-3 py-5 shadow-panel backdrop-blur-xl lg:block">
         <div className="relative z-10 h-full">
-        <nav className="space-y-1">
-          <p className="mb-3 px-3 text-xs font-bold uppercase tracking-[0.12em] text-muted-foreground">Dashboard</p>
-          {navItems.map((item) => {
-            const isActive = isActiveHref(pathname, item.href);
+        {visibleNavItems.length > 0 ? (
+          <nav className="space-y-1">
+            <p className="mb-3 px-3 text-xs font-bold uppercase tracking-[0.12em] text-muted-foreground">Dashboard</p>
+            {visibleNavItems.map((item) => {
+              const isActive = isActiveHref(pathname, item.href);
 
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={navLinkClass(isActive, "px-3")}
-              >
-                <item.icon className="h-4 w-4" />
-                {item.label}
-              </Link>
-            );
-          })}
-        </nav>
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={navLinkClass(isActive, "px-3")}
+                >
+                  <item.icon className="h-4 w-4" />
+                  {item.label}
+                </Link>
+              );
+            })}
+          </nav>
+        ) : null}
 
-        <div className="mt-5 border-t border-border/35 pt-5">
-          <p className="px-3 text-xs font-bold uppercase tracking-[0.12em] text-muted-foreground">Produk</p>
-          <div className="mt-3 flex items-center gap-3 rounded-ui border border-border/45 bg-background/35 px-3 py-2 text-muted-foreground">
-            <span className="grid h-7 w-7 place-items-center rounded-ui bg-muted text-xs font-black text-muted-foreground">E</span>
-            <span className="text-sm font-bold">Editins Studio</span>
-          </div>
+        <div className={visibleNavItems.length > 0 ? "mt-5 border-t border-border/35 pt-5" : "mt-0"}>
+          <p className="px-3 text-xs font-bold uppercase tracking-[0.12em] text-muted-foreground">Menu</p>
+          {user ? (
+            <div className="mt-3 flex items-center gap-3 rounded-ui border border-border/45 bg-background/35 px-3 py-2 text-muted-foreground">
+              <span className="grid h-7 w-7 place-items-center rounded-ui bg-muted text-xs font-black text-muted-foreground">E</span>
+              <span className="text-sm font-bold">Editins Studio</span>
+            </div>
+          ) : null}
           <nav className="mt-2 space-y-1">
-            {productNavItems.map((item) => {
+            {visibleProductNavItems.map((item) => {
               const isActive = isActiveHref(pathname, item.href);
 
               return (
@@ -355,7 +366,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-border/35 bg-card/95 px-2 py-2 shadow-soft backdrop-blur lg:hidden">
         <div className="grid grid-cols-1 gap-1">
-          {navItems.map((item) => {
+          {mobileNavItems.map((item) => {
             const isActive = isActiveHref(pathname, item.href);
 
             return (
