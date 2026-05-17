@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, BadgeCheck, Eraser, Images, Megaphone } from "lucide-react";
+import { ArrowRight, BadgeCheck, Camera, Eraser, Expand, ImagePlus, Images, LayoutDashboard, Megaphone, Paintbrush, ScanFace, Shirt, Star, Utensils, UserRound, Wand2 } from "lucide-react";
 
 import { AppShell } from "@/components/app-shell";
 import { AuthRequired } from "@/components/auth-required";
@@ -14,10 +14,88 @@ import type { FeatureSlug } from "@/types/editins";
 
 const featureCardStyles = {
   "foto-produk": {
-    icon: Images,
+    icon: Camera,
     shell: "border-emerald-300/40 bg-[linear-gradient(135deg,rgba(16,185,129,.20),rgba(14,165,233,.10)_48%,rgba(255,255,255,.05))]",
     iconWrap: "bg-emerald-500/14 text-emerald-500",
     charm: "bg-emerald-400/24",
+  },
+  "produk-model": {
+    icon: UserRound,
+    shell: "border-violet-300/40 bg-[linear-gradient(135deg,rgba(139,92,246,.20),rgba(14,165,233,.10)_48%,rgba(255,255,255,.05))]",
+    iconWrap: "bg-violet-500/14 text-violet-500",
+    charm: "bg-violet-400/24",
+  },
+  "gabung-foto": {
+    icon: ImagePlus,
+    shell: "border-violet-300/40 bg-[linear-gradient(135deg,rgba(139,92,246,.20),rgba(14,165,233,.10)_48%,rgba(255,255,255,.05))]",
+    iconWrap: "bg-violet-500/14 text-violet-500",
+    charm: "bg-violet-400/24",
+  },
+  "foto-miniatur": {
+    icon: Images,
+    shell: "border-blue-300/40 bg-[linear-gradient(135deg,rgba(96,165,250,.20),rgba(14,165,233,.10)_48%,rgba(255,255,255,.05))]",
+    iconWrap: "bg-blue-500/14 text-blue-500",
+    charm: "bg-blue-400/24",
+  },
+  "perluas-foto": {
+    icon: Expand,
+    shell: "border-teal-300/40 bg-[linear-gradient(135deg,rgba(45,212,191,.20),rgba(34,197,94,.08)_48%,rgba(255,255,255,.05))]",
+    iconWrap: "bg-teal-500/14 text-teal-500",
+    charm: "bg-teal-400/24",
+  },
+  "edit-foto": {
+    icon: Paintbrush,
+    shell: "border-indigo-300/40 bg-[linear-gradient(135deg,rgba(129,140,248,.20),rgba(168,85,247,.08)_48%,rgba(255,255,255,.05))]",
+    iconWrap: "bg-indigo-500/14 text-indigo-500",
+    charm: "bg-indigo-400/24",
+  },
+  "perbaiki-foto": {
+    icon: Wand2,
+    shell: "border-lime-300/40 bg-[linear-gradient(135deg,rgba(132,204,22,.20),rgba(34,197,94,.08)_48%,rgba(255,255,255,.05))]",
+    iconWrap: "bg-lime-500/14 text-lime-600 dark:text-lime-400",
+    charm: "bg-lime-400/24",
+  },
+  "face-swap": {
+    icon: ScanFace,
+    shell: "border-purple-300/40 bg-[linear-gradient(135deg,rgba(168,85,247,.20),rgba(236,72,153,.08)_48%,rgba(255,255,255,.05))]",
+    iconWrap: "bg-purple-500/14 text-purple-500",
+    charm: "bg-purple-400/24",
+  },
+  "foto-artis": {
+    icon: Star,
+    shell: "border-yellow-300/40 bg-[linear-gradient(135deg,rgba(250,204,21,.22),rgba(251,146,60,.09)_48%,rgba(255,255,255,.05))]",
+    iconWrap: "bg-yellow-500/14 text-yellow-600 dark:text-yellow-400",
+    charm: "bg-yellow-400/24",
+  },
+  "foto-fashion": {
+    icon: Shirt,
+    shell: "border-fuchsia-300/40 bg-[linear-gradient(135deg,rgba(217,70,239,.18),rgba(244,114,182,.09)_48%,rgba(255,255,255,.05))]",
+    iconWrap: "bg-fuchsia-500/14 text-fuchsia-500",
+    charm: "bg-fuchsia-400/24",
+  },
+  "carousel-marketplace": {
+    icon: Images,
+    shell: "border-cyan-300/40 bg-[linear-gradient(135deg,rgba(34,211,238,.20),rgba(59,130,246,.10)_48%,rgba(255,255,255,.05))]",
+    iconWrap: "bg-cyan-500/14 text-cyan-500",
+    charm: "bg-cyan-400/24",
+  },
+  "foto-makanan": {
+    icon: Utensils,
+    shell: "border-orange-300/40 bg-[linear-gradient(135deg,rgba(251,146,60,.22),rgba(251,191,36,.10)_48%,rgba(255,255,255,.05))]",
+    iconWrap: "bg-orange-500/14 text-orange-500",
+    charm: "bg-orange-400/24",
+  },
+  "buat-mockup": {
+    icon: LayoutDashboard,
+    shell: "border-slate-300/40 bg-[linear-gradient(135deg,rgba(148,163,184,.22),rgba(59,130,246,.08)_48%,rgba(255,255,255,.05))]",
+    iconWrap: "bg-slate-500/14 text-slate-500",
+    charm: "bg-slate-400/24",
+  },
+  "pov-tangan": {
+    icon: UserRound,
+    shell: "border-stone-300/40 bg-[linear-gradient(135deg,rgba(168,162,158,.22),rgba(251,146,60,.08)_48%,rgba(255,255,255,.05))]",
+    iconWrap: "bg-stone-500/14 text-stone-500",
+    charm: "bg-stone-400/24",
   },
   "foto-4x6": {
     icon: BadgeCheck,

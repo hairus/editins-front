@@ -9,7 +9,6 @@ import { useProductCatalog } from "@/components/product-catalog-provider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Panel } from "@/components/ui/panel";
-import type { FeatureSlug } from "@/types/editins";
 
 const featureVisuals = {
   "foto-produk": {
@@ -32,7 +31,7 @@ const featureVisuals = {
     label: "Foto 4x6",
     tone: "from-sky-400/22 via-primary/10 to-transparent",
   },
-} satisfies Record<FeatureSlug, { icon: typeof Camera; label: string; tone: string }>;
+};
 
 const pricing = [
   { name: "Starter", price: "Rp29.000", credits: "30 kredit / 30 hari", detail: "Cocok untuk seller baru yang ingin mulai merapikan foto jualan." },
@@ -57,7 +56,7 @@ const faq = [
 
 export default function Home() {
   const { error, isLoading, products } = useProductCatalog();
-  const mvpProducts = products.filter((product) => product.slug !== "foto-4x6").slice(0, 3);
+  const mvpProducts = products.filter((product) => ["foto-produk", "hapus-bg", "banner-promo"].includes(product.slug));
 
   return (
     <AppShell>
@@ -196,7 +195,7 @@ export default function Home() {
               </Panel>
             ) : null}
             {mvpProducts.map((feature) => {
-              const visual = featureVisuals[feature.slug];
+              const visual = featureVisuals[feature.slug] ?? featureVisuals["foto-produk"];
               const Icon = visual.icon;
 
               return (

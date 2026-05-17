@@ -1,4 +1,21 @@
-export type FeatureSlug = "foto-produk" | "foto-4x6" | "hapus-bg" | "banner-promo";
+export type FeatureSlug =
+  | "foto-produk"
+  | "produk-model"
+  | "gabung-foto"
+  | "foto-miniatur"
+  | "perluas-foto"
+  | "edit-foto"
+  | "perbaiki-foto"
+  | "face-swap"
+  | "foto-artis"
+  | "foto-fashion"
+  | "carousel-marketplace"
+  | "foto-makanan"
+  | "buat-mockup"
+  | "pov-tangan"
+  | "foto-4x6"
+  | "hapus-bg"
+  | "banner-promo";
 
 export type GenerationStatus = "queued" | "processing" | "success" | "failed";
 

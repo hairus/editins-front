@@ -5,16 +5,29 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   AlertTriangle,
+  BadgeCheck,
   Bell,
+  Camera,
   ChevronDown,
   CheckCircle2,
   CreditCard,
+  Eraser,
+  Expand,
   HelpCircle,
+  ImagePlus,
+  Images,
   LayoutDashboard,
   LogOut,
+  Megaphone,
+  Paintbrush,
+  ScanFace,
   Search,
   Settings2,
+  Shirt,
   Sparkles,
+  Star,
+  Utensils,
+  Wand2,
   X,
   UserRound,
 } from "lucide-react";
@@ -42,6 +55,35 @@ const productNavItems = [
   { href: "/billing", label: "Langganan", icon: CreditCard },
   { href: "/dashboard/settings", label: "Pengaturan", icon: Settings2 },
 ];
+
+const studioFeatureSections = [
+  {
+    title: "EDIT & GABUNG",
+    items: [
+      { href: "/generate/gabung-foto", label: "Gabung Foto", icon: ImagePlus, badge: "Pro" },
+      { href: "/generate/foto-miniatur", label: "Foto Miniatur", icon: Images, badge: "Pro" },
+      { href: "/generate/perluas-foto", label: "Perluas Foto", icon: Expand, badge: "Pro" },
+      { href: "/generate/edit-foto", label: "Edit Foto", icon: Paintbrush, badge: "Pro" },
+      { href: "/generate/perbaiki-foto", label: "Perbaiki Foto", icon: Wand2, badge: "Pro" },
+      { href: "/generate/face-swap", label: "Face Swap", icon: ScanFace, badge: "Pro" },
+      { href: "/generate/foto-artis", label: "Foto Artis", icon: Star, badge: "Pro" },
+      { href: "/generate/hapus-bg", label: "Hapus BG", icon: Eraser, badge: "Aktif" },
+      { href: "/generate/foto-4x6", label: "Pas Foto", icon: BadgeCheck, badge: "Beta" },
+    ],
+  },
+  {
+    title: "PRODUK & PROMOSI",
+    items: [
+      { href: "/generate/foto-produk", label: "Foto Produk", icon: Camera, badge: "Aktif" },
+      { href: "/generate/foto-fashion", label: "Foto Fashion", icon: Shirt, badge: "Pro" },
+      { href: "/generate/buat-mockup", label: "Buat Mockup", icon: LayoutDashboard, badge: "Pro" },
+      { href: "/generate/banner-promo", label: "Buat Banner", icon: Megaphone, badge: "Aktif" },
+      { href: "/generate/carousel-marketplace", label: "Buat Carousel", icon: Images, badge: "Pro" },
+      { href: "/generate/pov-tangan", label: "POV Tangan", icon: UserRound, badge: "Pro" },
+      { href: "/generate/foto-makanan", label: "Foto Makanan", icon: Utensils, badge: "Pro" },
+    ],
+  },
+] as const;
 
 type NotificationTone = "success" | "warning" | "neutral" | "danger";
 type NotificationItem = {
@@ -285,11 +327,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
       </header>
 
-      <aside className="fixed bottom-0 left-0 top-12 z-30 hidden w-64 overflow-hidden border-r border-border/60 bg-card/96 px-3 py-5 shadow-panel backdrop-blur-xl lg:block">
+      <aside className="fixed bottom-0 left-0 top-12 z-30 hidden w-64 overflow-hidden border-r border-border/45 bg-[linear-gradient(180deg,hsl(var(--card)/.98),hsl(var(--background)/.94))] px-3 py-4 shadow-panel backdrop-blur-xl lg:block">
         <div className="relative z-10 h-full">
+        <div className="soft-scrollbar h-full overflow-y-auto pb-4 pr-1">
         {visibleNavItems.length > 0 ? (
           <nav className="space-y-1">
-            <p className="mb-3 px-3 text-xs font-bold uppercase tracking-[0.12em] text-muted-foreground">Dashboard</p>
+            <p className="mb-2 px-3 text-[11px] font-black uppercase tracking-[0.18em] text-muted-foreground/90">Dashboard</p>
             {visibleNavItems.map((item) => {
               const isActive = isActiveHref(pathname, item.href);
 
@@ -298,6 +341,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   key={item.href}
                   href={item.href}
                   className={navLinkClass(isActive, "px-3")}
+                  onClick={scrollPageToTop}
                 >
                   <item.icon className="h-4 w-4" />
                   {item.label}
@@ -307,12 +351,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </nav>
         ) : null}
 
-        <div className={visibleNavItems.length > 0 ? "mt-5 border-t border-border/35 pt-5" : "mt-0"}>
-          <p className="px-3 text-xs font-bold uppercase tracking-[0.12em] text-muted-foreground">Menu</p>
+        <div className={visibleNavItems.length > 0 ? "mt-4 border-t border-border/35 pt-4" : "mt-0"}>
+          <p className="px-3 text-[11px] font-black uppercase tracking-[0.18em] text-muted-foreground/90">Menu</p>
           {user ? (
-            <div className="mt-3 flex items-center gap-3 rounded-ui border border-border/45 bg-background/35 px-3 py-2 text-muted-foreground">
-              <span className="grid h-7 w-7 place-items-center rounded-ui bg-muted text-xs font-black text-muted-foreground">E</span>
-              <span className="text-sm font-bold">Editins Studio</span>
+            <div className="mt-2 flex items-center gap-3 rounded-[1rem] border border-border/45 bg-background/32 px-3 py-2 text-muted-foreground shadow-soft">
+              <span className="grid h-8 w-8 place-items-center rounded-[0.8rem] bg-[linear-gradient(135deg,hsl(var(--primary)/.18),hsl(var(--secondary)/.14))] text-xs font-black text-secondary">E</span>
+              <span className="text-sm font-black text-foreground/85">Editins Studio</span>
             </div>
           ) : null}
           <nav className="mt-2 space-y-1">
@@ -324,6 +368,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   key={item.href}
                   href={item.href}
                   className={navLinkClass(isActive, "px-6")}
+                  onClick={scrollPageToTop}
                 >
                   <item.icon className="h-4 w-4" />
                   {item.label}
@@ -333,27 +378,47 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </nav>
         </div>
 
-        <div className="absolute bottom-5 left-3 right-3 overflow-hidden rounded-ui border border-secondary/20 bg-[linear-gradient(145deg,hsl(var(--secondary)/.14),hsl(var(--background)/.84)_46%,hsl(var(--primary)/.10))] p-3 shadow-soft">
-          <div className="flex items-center gap-3">
-            <span className="relative grid h-10 w-10 shrink-0 place-items-center rounded-full border border-secondary/25 bg-card/80 text-sm font-black text-secondary shadow-soft">
-              {user ? initials(displayName) : "E"}
-              <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border-2 border-card bg-success" />
-            </span>
-            <div className="min-w-0">
-              <p className="truncate text-sm font-bold">{user ? displayName : "Belum masuk"}</p>
-              <p className="mt-0.5 truncate text-[11px] font-semibold text-muted-foreground">
-                {user ? tierMarketingLabel(user.profile.tier) : "Akun Editins"}
-              </p>
+        {user ? (
+          <div className="mt-4 border-t border-border/35 pt-4">
+            <div className="space-y-4">
+              {studioFeatureSections.map((section) => (
+                <div key={section.title}>
+                  <p className="px-3 text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground/85">{section.title}</p>
+                  <nav className="mt-1.5 space-y-0.5">
+                    {section.items.map((item) => {
+                      const isActive = "href" in item && item.href ? isActiveHref(pathname, item.href) : false;
+                      const Icon = item.icon;
+
+                      if (!("href" in item) || !item.href) {
+                        return (
+                          <div key={item.label} className="flex min-h-10 items-center gap-3 rounded-ui px-3 text-sm font-semibold text-muted-foreground/75">
+                            <Icon className="h-4 w-4" />
+                            <span className="min-w-0 flex-1 truncate">{item.label}</span>
+                            <span className="rounded-full bg-muted px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.08em] text-muted-foreground">
+                              {item.badge}
+                            </span>
+                          </div>
+                        );
+                      }
+
+                      return (
+                        <Link key={item.href} href={item.href} className={featureNavLinkClass(isActive)} onClick={scrollPageToTop}>
+                          <Icon className="h-4 w-4" />
+                          <span className="min-w-0 flex-1 truncate">{item.label}</span>
+                          <span className={isActive ? "rounded-full bg-secondary/18 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.08em] text-secondary" : "rounded-full bg-muted/80 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.08em] text-muted-foreground"}>
+                            {item.badge}
+                          </span>
+                        </Link>
+                      );
+                    })}
+                  </nav>
+                </div>
+              ))}
             </div>
           </div>
-          <div className="mt-3 flex items-center justify-between gap-2 rounded-ui border border-border/35 bg-card/45 px-2.5 py-2">
-            <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground">Kredit</span>
-            <span className="text-xs font-black text-secondary">{user ? user.profile.credits_remaining : 0}</span>
-          </div>
-          <p className="mt-2 line-clamp-1 text-xs font-medium text-muted-foreground">
-            {user ? user.email : "Masuk untuk menyimpan hasil foto."}
-          </p>
+        ) : null}
         </div>
+
         </div>
       </aside>
 
@@ -370,11 +435,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             const isActive = isActiveHref(pathname, item.href);
 
             return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={mobileNavLinkClass(isActive)}
-              >
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={mobileNavLinkClass(isActive)}
+                  onClick={scrollPageToTop}
+                >
                 <item.icon className="h-4 w-4" />
                 <span className="max-w-full truncate">{item.label}</span>
               </Link>
@@ -487,11 +553,20 @@ function isActiveHref(pathname: string, href: string) {
 
 function navLinkClass(isActive: boolean, paddingClass: string) {
   return [
-    "flex min-h-9 items-center gap-3 rounded-ui text-sm font-semibold transition",
+    "flex min-h-9 items-center gap-3 rounded-[0.9rem] text-sm font-bold transition",
     paddingClass,
     isActive
-      ? "border border-secondary/25 bg-secondary/12 text-secondary shadow-[0_10px_22px_-18px_hsl(var(--secondary))]"
-      : "text-muted-foreground hover:bg-secondary/10 hover:text-secondary",
+      ? "border border-secondary/30 bg-[linear-gradient(135deg,hsl(var(--secondary)/.16),hsl(var(--secondary)/.07))] text-secondary shadow-[0_14px_28px_-22px_hsl(var(--secondary))]"
+      : "text-muted-foreground hover:bg-secondary/8 hover:text-secondary",
+  ].join(" ");
+}
+
+function featureNavLinkClass(isActive: boolean) {
+  return [
+    "flex min-h-9 items-center gap-3 rounded-[0.9rem] px-3 text-[13px] font-bold transition",
+    isActive
+      ? "border border-secondary/30 bg-[linear-gradient(135deg,hsl(var(--secondary)/.16),hsl(var(--secondary)/.07))] text-secondary shadow-[0_14px_28px_-22px_hsl(var(--secondary))]"
+      : "text-muted-foreground hover:bg-secondary/8 hover:text-secondary",
   ].join(" ");
 }
 
@@ -502,6 +577,10 @@ function mobileNavLinkClass(isActive: boolean) {
       ? "border border-secondary/25 bg-secondary/12 text-secondary shadow-[0_10px_22px_-18px_hsl(var(--secondary))]"
       : "text-muted-foreground hover:bg-secondary/10 hover:text-secondary",
   ].join(" ");
+}
+
+function scrollPageToTop() {
+  window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
 function titleCaseName(name: string) {

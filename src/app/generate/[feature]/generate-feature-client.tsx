@@ -21,6 +21,71 @@ const heroCopy: Partial<Record<FeatureSlug, { title: string; accent: string; des
     accent: "Lebih Siap Jual",
     description: "Upload foto mentah, pilih gaya, lalu siapkan visual katalog dengan cahaya lembut dan hasil yang rapi.",
   },
+  "produk-model": {
+    title: "Gabung Foto Produk",
+    accent: "dengan Model",
+    description: "Upload minimal 2 foto: produk dan model/referensi. Editins akan menggabungkan keduanya menjadi visual campaign yang natural.",
+  },
+  "gabung-foto": {
+    title: "Gabung Foto",
+    accent: "Jadi Satu Visual",
+    description: "Upload minimal 2 foto untuk digabung menjadi satu visual jualan yang natural, rapi, dan siap promosi.",
+  },
+  "foto-miniatur": {
+    title: "Buat Foto Miniatur",
+    accent: "Lebih Menarik",
+    description: "Buat thumbnail atau cover produk yang jelas, kontras, dan mudah menarik perhatian di marketplace atau sosial media.",
+  },
+  "perluas-foto": {
+    title: "Perluas Foto",
+    accent: "Tanpa Merusak Produk",
+    description: "Perluas kanvas foto untuk banner, sosial media, atau marketplace dengan latar yang tetap natural.",
+  },
+  "edit-foto": {
+    title: "Edit Foto",
+    accent: "Sesuai Kebutuhan",
+    description: "Beri instruksi edit seperti ganti latar, rapikan objek, bersihkan detail, atau ubah gaya visual jualan.",
+  },
+  "perbaiki-foto": {
+    title: "Perbaiki Foto",
+    accent: "Lebih Layak Jual",
+    description: "Tingkatkan foto yang gelap, buram, kusam, atau kurang rapi agar siap dipakai untuk katalog produk.",
+  },
+  "face-swap": {
+    title: "Face Swap",
+    accent: "Aset Berizin",
+    description: "Gunakan hanya foto milik sendiri atau berizin untuk membuat visual model campaign yang aman dan natural.",
+  },
+  "foto-artis": {
+    title: "Foto Artis",
+    accent: "Gaya Talent Premium",
+    description: "Buat visual talent profesional untuk campaign produk tanpa meniru artis nyata atau public figure tertentu.",
+  },
+  "foto-fashion": {
+    title: "Rapikan Foto Fashion",
+    accent: "Siap Katalog",
+    description: "Upload foto pakaian atau aksesori, lalu buat hasil katalog marketplace dengan warna dan detail tetap akurat.",
+  },
+  "carousel-marketplace": {
+    title: "Buat Carousel",
+    accent: "Marketplace",
+    description: "Ubah foto produk menjadi cover carousel atau visual multi-section yang rapi, mudah dibaca, dan siap promosi.",
+  },
+  "foto-makanan": {
+    title: "Bikin Foto Makanan",
+    accent: "Lebih Menggoda",
+    description: "Upload foto makanan, lalu tingkatkan pencahayaan, warna, dan komposisi agar cocok untuk menu online.",
+  },
+  "buat-mockup": {
+    title: "Buat Mockup",
+    accent: "Realistis",
+    description: "Tempatkan produk, logo, label, atau desain ke mockup kemasan, kaos, botol, poster, atau display toko.",
+  },
+  "pov-tangan": {
+    title: "POV Tangan",
+    accent: "Terlihat Natural",
+    description: "Buat visual tangan memegang, menunjuk, membuka, atau menunjukkan produk untuk konten marketplace dan sosial media.",
+  },
   "foto-4x6": {
     title: "Buat Pas Foto",
     accent: "4x6 Lebih Rapi",

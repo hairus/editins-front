@@ -7,6 +7,7 @@ export type GenerateImageInput = {
   aspectRatio?: string | null;
   mockMode?: boolean;
   image?: File | null;
+  images?: File[];
 };
 
 export type GenerateImageResult = {
@@ -69,6 +70,10 @@ async function postGenerate(input: GenerateImageInput) {
   if (input.image) {
     formData.append("image", input.image);
   }
+
+  input.images?.forEach((image) => {
+    formData.append("images[]", image);
+  });
 
   const response = await apiFetch("/generate", {
     method: "POST",

@@ -21,6 +21,19 @@ type StudioMode = {
 
 const defaults: Record<Feature["slug"], StudioMode> = {
   "foto-produk": { background: "Studio daylight", ratio: "1:1 marketplace", style: "Natural catalog" },
+  "produk-model": { background: "Lifestyle campaign", ratio: "4:5 social", style: "Natural catalog" },
+  "gabung-foto": { background: "Unified campaign scene", ratio: "4:5 social", style: "Natural catalog" },
+  "foto-miniatur": { background: "Marketplace thumbnail", ratio: "1:1 marketplace", style: "Bold sale" },
+  "perluas-foto": { background: "Extended studio canvas", ratio: "16:9 banner", style: "Natural catalog" },
+  "edit-foto": { background: "Custom edit", ratio: "1:1 marketplace", style: "Natural catalog" },
+  "perbaiki-foto": { background: "Clean enhancement", ratio: "Original", style: "Natural catalog" },
+  "face-swap": { background: "Consented model campaign", ratio: "4:5 social", style: "Natural catalog" },
+  "foto-artis": { background: "Premium talent studio", ratio: "4:5 social", style: "Luxury counter" },
+  "foto-fashion": { background: "Fashion catalog", ratio: "4:5 social", style: "Natural catalog" },
+  "carousel-marketplace": { background: "Marketplace carousel", ratio: "1:1 marketplace", style: "Bold sale" },
+  "foto-makanan": { background: "Warm table setup", ratio: "4:5 social", style: "Warm kitchen" },
+  "buat-mockup": { background: "Realistic mockup scene", ratio: "1:1 marketplace", style: "Natural catalog" },
+  "pov-tangan": { background: "Handheld POV", ratio: "4:5 social", style: "Natural catalog" },
   "foto-4x6": { background: "Soft blue ID background", ratio: "4x6 portrait", style: "Formal ID photo" },
   "hapus-bg": { background: "Transparent PNG", ratio: "Original", style: "Clean edge" },
   "banner-promo": { background: "Promo shelf", ratio: "4:5 social", style: "Bold sale" },
@@ -36,8 +49,8 @@ const styleOptions = [
 
 export function GenerationStudio({ feature }: { feature: Feature }) {
   const { user, isLoading, refreshUser } = useAuth();
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [selectedPreviewUrl, setSelectedPreviewUrl] = useState<string | null>(null);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [selectedPreviewUrls, setSelectedPreviewUrls] = useState<string[]>([]);
   const [uploadInputKey, setUploadInputKey] = useState(0);
   const [instruction, setInstruction] = useState("");
   const [promoText, setPromoText] = useState("");
@@ -53,19 +66,23 @@ export function GenerationStudio({ feature }: { feature: Feature }) {
   const isBanner = feature.slug === "banner-promo";
   const isPhoto46 = feature.slug === "foto-4x6";
   const isRemoveBg = feature.slug === "hapus-bg";
+  const isProductModel = feature.slug === "produk-model" || feature.slug === "gabung-foto" || feature.slug === "face-swap";
+  const isCarousel = feature.slug === "carousel-marketplace";
+  const isFood = feature.slug === "foto-makanan";
+  const isFashion = feature.slug === "foto-fashion";
   const isGenerateDisabled = isGenerating || isLoading;
 
   useEffect(() => {
-    if (!selectedFile) {
-      setSelectedPreviewUrl(null);
+    if (selectedFiles.length === 0) {
+      setSelectedPreviewUrls([]);
       return;
     }
 
-    const objectUrl = URL.createObjectURL(selectedFile);
-    setSelectedPreviewUrl(objectUrl);
+    const objectUrls = selectedFiles.map((file) => URL.createObjectURL(file));
+    setSelectedPreviewUrls(objectUrls);
 
-    return () => URL.revokeObjectURL(objectUrl);
-  }, [selectedFile]);
+    return () => objectUrls.forEach((objectUrl) => URL.revokeObjectURL(objectUrl));
+  }, [selectedFiles]);
 
   useEffect(() => {
     if (!isPreviewOpen && !quotaDialog) return;
@@ -110,7 +127,12 @@ export function GenerationStudio({ feature }: { feature: Feature }) {
       }
     }
 
-    if (isPhoto46 && !selectedFile) {
+    if (isProductModel && selectedFiles.length < 2) {
+      setErrorMessage("Upload minimal 2 foto: foto produk dan foto model/referensi untuk digabung.");
+      return;
+    }
+
+    if (isPhoto46 && selectedFiles.length === 0) {
       setErrorMessage("Upload foto wajah dulu sebelum generate Foto 4x6.");
       return;
     }
@@ -134,7 +156,7 @@ export function GenerationStudio({ feature }: { feature: Feature }) {
         instruction: preparedInstruction,
         aspectRatio: aspectRatioFor(mode.ratio),
         mockMode: useMockMode,
-        image: selectedFile,
+        images: selectedFiles,
       });
 
       setProgress(100);
@@ -167,15 +189,17 @@ export function GenerationStudio({ feature }: { feature: Feature }) {
     }
   }
 
-  function handleFileChange(file: File | undefined) {
-    setSelectedFile(file ?? null);
+  function handleFileChange(fileList: FileList | null) {
+    const files = Array.from(fileList ?? []).slice(0, 5);
+
+    setSelectedFiles(files);
     setResult(null);
     setErrorMessage(null);
     setQuotaDialog(null);
   }
 
   function handleRemoveFile() {
-    setSelectedFile(null);
+    setSelectedFiles([]);
     setUploadInputKey((current) => current + 1);
     setResult(null);
     setPreviewOpen(false);
@@ -185,6 +209,57 @@ export function GenerationStudio({ feature }: { feature: Feature }) {
 
   function buildInstruction() {
     const baseInstruction = instruction.trim() || defaultInstructionFor(feature.slug);
+
+    if (isProductModel) {
+      return [
+        feature.slug === "face-swap"
+          ? "Create a consented model/face reference edit for an Indonesian UMKM campaign image. Do not impersonate celebrities or public figures."
+          : "Combine multiple uploaded references into one ecommerce campaign image.",
+        feature.slug === "face-swap"
+          ? "Use image 1 as the campaign/model base and image 2 as the consented face/reference only when appropriate. If unsafe, create a generic professional model look."
+          : "Use image 1 as the exact product reference and image 2 as model/pose/lifestyle reference.",
+        "Keep product details accurate and make the result natural, premium, and ready for Indonesian marketplace selling.",
+        `Selected style: ${mode.style}. Background: ${mode.background}. Ratio: ${mode.ratio}.`,
+        `User instruction: ${baseInstruction}`,
+      ].join("\n");
+    }
+
+    if (["foto-miniatur", "perluas-foto", "edit-foto", "perbaiki-foto", "foto-artis", "buat-mockup", "pov-tangan"].includes(feature.slug)) {
+      return [
+        `Run the ${feature.title} workflow for Indonesian UMKM selling visuals.`,
+        "Preserve the product truthfully and follow the user's requested edit style.",
+        "For Foto Artis, create a premium talent/brand ambassador style without copying any real celebrity or public figure.",
+        `Selected style: ${mode.style}. Background: ${mode.background}. Ratio: ${mode.ratio}.`,
+        `User instruction: ${baseInstruction}`,
+      ].join("\n");
+    }
+
+    if (isCarousel) {
+      return [
+        "Create a marketplace carousel cover or multi-section visual from the uploaded product photo.",
+        "Use clear Indonesian ecommerce layout, benefit blocks, mobile-readable hierarchy, and product-first composition.",
+        `Selected style: ${mode.style}. Background: ${mode.background}. Ratio: ${mode.ratio}.`,
+        `User instruction: ${baseInstruction}`,
+      ].join("\n");
+    }
+
+    if (isFood) {
+      return [
+        "Enhance the uploaded food photo into an appetizing but realistic menu/catalog image.",
+        "Keep the dish identity and portion believable while improving lighting, plating, freshness, and background.",
+        `Selected style: ${mode.style}. Background: ${mode.background}. Ratio: ${mode.ratio}.`,
+        `User instruction: ${baseInstruction}`,
+      ].join("\n");
+    }
+
+    if (isFashion) {
+      return [
+        "Edit the uploaded fashion product into a marketplace catalog image.",
+        "Keep fabric, color, pattern, cut, logo, and material accurate while improving presentation and lighting.",
+        `Selected style: ${mode.style}. Background: ${mode.background}. Ratio: ${mode.ratio}.`,
+        `User instruction: ${baseInstruction}`,
+      ].join("\n");
+    }
 
     if (isPhoto46) {
       return [
@@ -248,7 +323,7 @@ export function GenerationStudio({ feature }: { feature: Feature }) {
         </div>
 
         <div className="mt-6 space-y-6">
-          <StudioStep number={1} title="Bahan gambar" meta="Max 5">
+          <StudioStep number={1} title="Bahan gambar" meta={isProductModel ? "Min 2, max 5" : "Max 5"}>
             <div className="relative">
               <label className="grid min-h-24 cursor-pointer place-items-center overflow-hidden rounded-ui border border-dashed border-input/70 bg-background/75 p-3 text-center transition hover:border-primary/45 hover:bg-primary/5">
                 <input
@@ -256,29 +331,39 @@ export function GenerationStudio({ feature }: { feature: Feature }) {
                   className="sr-only"
                   type="file"
                   accept="image/png,image/jpeg,image/webp"
-                  onChange={(event) => handleFileChange(event.target.files?.[0])}
+                  multiple
+                  onChange={(event) => handleFileChange(event.target.files)}
                 />
                 <span className="grid w-full place-items-center gap-2">
-                  {selectedPreviewUrl ? (
-                    <span className="relative block w-full overflow-hidden rounded-ui border border-border/55 bg-card shadow-soft">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={selectedPreviewUrl}
-                        alt="Preview bahan gambar"
-                        className={isPhoto46 ? "mx-auto max-h-52 w-auto object-contain" : "max-h-40 w-full object-contain"}
-                      />
+                  {selectedPreviewUrls.length > 0 ? (
+                    <span className={selectedPreviewUrls.length > 1 ? "grid w-full grid-cols-2 gap-2" : "grid w-full gap-2"}>
+                      {selectedPreviewUrls.map((previewUrl, index) => (
+                        <span key={previewUrl} className="relative block w-full overflow-hidden rounded-ui border border-border/55 bg-card shadow-soft">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={previewUrl}
+                            alt={`Preview bahan gambar ${index + 1}`}
+                            className={isPhoto46 ? "mx-auto max-h-52 w-auto object-contain" : "max-h-40 w-full object-contain"}
+                          />
+                          <span className="absolute left-2 top-2 rounded-full bg-background/86 px-2 py-0.5 text-[10px] font-black text-muted-foreground shadow-soft">
+                            {index === 0 && isProductModel ? "Produk" : index === 1 && isProductModel ? "Referensi" : `Foto ${index + 1}`}
+                          </span>
+                        </span>
+                      ))}
                     </span>
                   ) : (
                     <>
                       <span className="grid h-11 w-11 place-items-center rounded-ui bg-muted text-muted-foreground">
                         <ImageUp className="h-5 w-5" />
                       </span>
-                      <span className="max-w-full break-words text-xs font-semibold text-muted-foreground">Klik untuk upload gambar</span>
+                      <span className="max-w-full break-words text-xs font-semibold text-muted-foreground">
+                        {isProductModel ? "Klik untuk upload produk + model/referensi" : "Klik untuk upload gambar"}
+                      </span>
                     </>
                   )}
                 </span>
               </label>
-              {selectedPreviewUrl ? (
+              {selectedPreviewUrls.length > 0 ? (
                 <button
                   type="button"
                   className="absolute right-2 top-2 grid h-9 w-9 place-items-center rounded-ui border border-destructive/20 bg-background/90 text-destructive shadow-soft backdrop-blur transition hover:bg-destructive hover:text-destructive-foreground"
@@ -386,7 +471,7 @@ export function GenerationStudio({ feature }: { feature: Feature }) {
             variant="outline"
             aria-label="Reset"
             onClick={() => {
-              setSelectedFile(null);
+              setSelectedFiles([]);
               setUploadInputKey((current) => current + 1);
               setInstruction("");
               setPromoText("");
@@ -583,6 +668,58 @@ function aspectRatioFor(ratio: string) {
 }
 
 function defaultInstructionFor(slug: Feature["slug"]) {
+  if (slug === "gabung-foto") {
+    return "Gabungkan beberapa foto menjadi satu visual jualan yang natural. Foto pertama adalah produk utama, foto berikutnya sebagai referensi gaya, model, atau suasana.";
+  }
+
+  if (slug === "foto-miniatur") {
+    return "Buat thumbnail produk yang kuat, jelas, dan mudah menarik perhatian di marketplace atau sosial media.";
+  }
+
+  if (slug === "perluas-foto") {
+    return "Perluas kanvas foto agar cocok untuk banner atau rasio sosial media tanpa mengubah produk utama.";
+  }
+
+  if (slug === "edit-foto") {
+    return "Edit foto sesuai kebutuhan jualan: rapikan latar, komposisi, cahaya, atau detail kecil tanpa mengubah produk.";
+  }
+
+  if (slug === "perbaiki-foto") {
+    return "Perbaiki foto yang gelap, buram, kusam, atau kurang rapi agar lebih layak untuk katalog jualan.";
+  }
+
+  if (slug === "face-swap") {
+    return "Gunakan hanya foto milik sendiri atau berizin. Buat hasil model campaign yang natural tanpa meniru artis atau orang publik.";
+  }
+
+  if (slug === "foto-artis") {
+    return "Buat visual bergaya talent profesional premium tanpa meniru wajah artis nyata atau public figure tertentu.";
+  }
+
+  if (slug === "buat-mockup") {
+    return "Tempatkan produk, label, logo, atau desain ke mockup realistis seperti kemasan, kaos, botol, poster, atau display toko.";
+  }
+
+  if (slug === "pov-tangan") {
+    return "Buat gaya POV tangan memegang, menunjuk, membuka, atau menunjukkan produk secara natural dan jelas.";
+  }
+
+  if (slug === "produk-model") {
+    return "Gabungkan foto produk dengan foto model atau referensi gaya. Produk harus tetap akurat, hasil natural, dan siap untuk visual campaign marketplace.";
+  }
+
+  if (slug === "foto-fashion") {
+    return "Rapikan foto fashion menjadi katalog marketplace dengan warna, bahan, pola, dan potongan tetap akurat.";
+  }
+
+  if (slug === "carousel-marketplace") {
+    return "Buat cover carousel marketplace yang rapi, mudah dibaca, dan menonjolkan produk serta manfaat utama.";
+  }
+
+  if (slug === "foto-makanan") {
+    return "Buat foto makanan terlihat lebih menggugah selera dengan pencahayaan hangat dan komposisi tetap realistis.";
+  }
+
   if (slug === "foto-4x6") {
     return "Buat pas foto 4x6 formal dengan latar biru muda, wajah natural, dan pencahayaan rapi.";
   }
