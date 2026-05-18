@@ -29,7 +29,7 @@ const featureVisuals: Partial<Record<FeatureSlug, { icon: typeof Camera; label: 
   },
   "foto-4x6": {
     icon: BadgeCheck,
-    label: "Foto 4x6",
+    label: "Pas Foto",
     tone: "from-sky-400/22 via-primary/10 to-transparent",
   },
 };

@@ -19,67 +19,22 @@ type ProductResponse = {
 
 const fallbackProducts: BackendProduct[] = [
   {
-    slug: "gabung-foto",
-    title: "Gabung Foto",
-    shortTitle: "Gabung Foto",
-    description: "Gabungkan minimal 2 foto menjadi satu visual jualan yang natural, rapi, dan siap dipakai untuk campaign produk.",
-    credits: 2,
-    eta: "12-25 detik",
-    output: "JPG/PNG 4:5",
-  },
-  {
-    slug: "foto-miniatur",
-    title: "Foto Miniatur",
-    shortTitle: "Foto Miniatur",
-    description: "Buat thumbnail atau cover produk yang kuat, jelas, dan mudah menarik perhatian di marketplace atau sosial media.",
+    slug: "foto-produk",
+    title: "Foto Produk Studio",
+    shortTitle: "Foto Produk",
+    description: "Ubah foto meja biasa jadi foto katalog dengan cahaya studio, bayangan halus, dan latar jualan yang rapi.",
     credits: 1,
     eta: "10-20 detik",
-    output: "JPG 1:1/16:9",
+    output: "JPG 1024px",
   },
   {
-    slug: "perluas-foto",
-    title: "Perluas Foto",
-    shortTitle: "Perluas Foto",
-    description: "Perluas kanvas foto produk untuk rasio banner, sosial media, atau marketplace tanpa merusak objek utama.",
+    slug: "foto-4x6",
+    title: "Pas Foto",
+    shortTitle: "Pas Foto",
+    description: "Rapikan foto wajah menjadi pas foto portrait 4x6 dengan latar bersih, cahaya lembut, dan komposisi formal.",
     credits: 1,
     eta: "10-20 detik",
-    output: "JPG multi rasio",
-  },
-  {
-    slug: "edit-foto",
-    title: "Edit Foto",
-    shortTitle: "Edit Foto",
-    description: "Edit foto produk sesuai instruksi: ganti latar, bersihkan detail, rapikan komposisi, atau sesuaikan gaya visual.",
-    credits: 1,
-    eta: "10-20 detik",
-    output: "JPG/PNG",
-  },
-  {
-    slug: "perbaiki-foto",
-    title: "Perbaiki Foto",
-    shortTitle: "Perbaiki Foto",
-    description: "Tingkatkan foto yang gelap, buram, kusam, atau kurang rapi agar lebih layak dipakai untuk jualan.",
-    credits: 1,
-    eta: "10-20 detik",
-    output: "JPG/PNG",
-  },
-  {
-    slug: "face-swap",
-    title: "Face Swap",
-    shortTitle: "Face Swap",
-    description: "Ganti wajah/model hanya untuk aset milik sendiri atau berizin agar visual campaign tetap aman dan natural.",
-    credits: 2,
-    eta: "12-25 detik",
-    output: "JPG/PNG 4:5",
-  },
-  {
-    slug: "foto-artis",
-    title: "Foto Artis",
-    shortTitle: "Foto Artis",
-    description: "Buat visual talent profesional bergaya premium tanpa meniru artis nyata atau identitas publik tertentu.",
-    credits: 2,
-    eta: "12-25 detik",
-    output: "JPG/PNG 4:5",
+    output: "PNG 2x3/3x4/4x6/4x4",
   },
   {
     slug: "hapus-bg",
@@ -91,22 +46,22 @@ const fallbackProducts: BackendProduct[] = [
     output: "PNG transparan",
   },
   {
-    slug: "foto-4x6",
-    title: "Foto 4x6",
-    shortTitle: "Foto 4x6",
-    description: "Rapikan foto wajah menjadi pas foto portrait 4x6 dengan latar bersih, cahaya lembut, dan komposisi formal.",
-    credits: 1,
-    eta: "10-20 detik",
-    output: "PNG 2:3",
+    slug: "banner-promo",
+    title: "Banner Promo",
+    shortTitle: "Banner Promo",
+    description: "Buat banner promo cepat dengan teks singkat, rasio marketplace, dan gaya visual sesuai campaign.",
+    credits: 2,
+    eta: "12-20 detik",
+    output: "JPG/PNG multi rasio",
   },
   {
-    slug: "foto-produk",
-    title: "Foto Produk Studio",
-    shortTitle: "Foto Produk",
-    description: "Ubah foto meja biasa jadi foto katalog dengan cahaya studio, bayangan halus, dan latar jualan yang rapi.",
-    credits: 1,
-    eta: "10-20 detik",
-    output: "JPG 1024px",
+    slug: "produk-model",
+    title: "Produk + Model AI",
+    shortTitle: "Produk + Model",
+    description: "Gabungkan foto produk dengan foto model atau referensi gaya untuk membuat visual campaign produk yang natural dan siap jual.",
+    credits: 2,
+    eta: "12-25 detik",
+    output: "JPG/PNG 4:5",
   },
   {
     slug: "foto-fashion",
@@ -118,24 +73,6 @@ const fallbackProducts: BackendProduct[] = [
     output: "JPG 4:5",
   },
   {
-    slug: "buat-mockup",
-    title: "Buat Mockup",
-    shortTitle: "Buat Mockup",
-    description: "Tempatkan produk, logo, label, atau desain ke mockup realistis seperti kemasan, kaos, botol, poster, atau display.",
-    credits: 2,
-    eta: "12-25 detik",
-    output: "JPG/PNG 1:1",
-  },
-  {
-    slug: "banner-promo",
-    title: "Banner Promo",
-    shortTitle: "Banner Promo",
-    description: "Buat banner promo cepat dengan teks singkat, rasio marketplace, dan gaya visual sesuai campaign.",
-    credits: 2,
-    eta: "12-20 detik",
-    output: "JPG/PNG multi rasio",
-  },
-  {
     slug: "carousel-marketplace",
     title: "Carousel Marketplace",
     shortTitle: "Carousel",
@@ -143,15 +80,6 @@ const fallbackProducts: BackendProduct[] = [
     credits: 2,
     eta: "12-25 detik",
     output: "JPG 1:1/4:5",
-  },
-  {
-    slug: "pov-tangan",
-    title: "POV Tangan",
-    shortTitle: "POV Tangan",
-    description: "Buat foto produk dengan gaya tangan memegang, menunjuk, membuka, atau menunjukkan produk secara natural.",
-    credits: 2,
-    eta: "12-25 detik",
-    output: "JPG/PNG 4:5",
   },
   {
     slug: "foto-makanan",
@@ -163,6 +91,12 @@ const fallbackProducts: BackendProduct[] = [
     output: "JPG 4:5",
   },
 ];
+
+const activeProductSlugs = new Set<FeatureSlug>([
+  "foto-produk",
+  "foto-4x6",
+  "hapus-bg",
+]);
 
 export async function productCatalog(): Promise<Feature[]> {
   try {
@@ -190,13 +124,15 @@ function mergeProducts(products: BackendProduct[]) {
 }
 
 function normalizeProducts(products: BackendProduct[]): Feature[] {
-  return products.map((product) => ({
-    slug: product.slug,
-    title: product.title,
-    shortTitle: product.shortTitle ?? product.short_title ?? product.title,
-    description: product.description,
-    credits: product.credits,
-    eta: product.eta,
-    output: product.output,
-  }));
+  return products
+    .filter((product) => activeProductSlugs.has(product.slug))
+    .map((product) => ({
+      slug: product.slug,
+      title: product.title,
+      shortTitle: product.shortTitle ?? product.short_title ?? product.title,
+      description: product.description,
+      credits: product.credits,
+      eta: product.eta,
+      output: product.output,
+    }));
 }

@@ -9,7 +9,6 @@ export type GenerateImageInput = {
   image?: File | null;
   images?: File[];
   logoImage?: File | null;
-  templateImage?: File | null;
 };
 
 export type GenerateImageResult = {
@@ -79,10 +78,6 @@ async function postGenerate(input: GenerateImageInput) {
 
   if (input.logoImage) {
     formData.append("logo_image", input.logoImage);
-  }
-
-  if (input.templateImage) {
-    formData.append("template_image", input.templateImage);
   }
 
   const response = await apiFetch("/generate", {

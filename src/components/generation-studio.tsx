@@ -6,7 +6,7 @@ import { AlertTriangle, CheckCircle2, CreditCard, Download, Eye, ImageIcon, Imag
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input, Textarea } from "@/components/ui/field";
+import { Input, Select, Textarea } from "@/components/ui/field";
 import { Panel } from "@/components/ui/panel";
 import { useAuth } from "@/components/auth-provider";
 import { GenerateApiError, generateImage, type GenerateImageResult } from "@/lib/api/generate";
@@ -14,13 +14,14 @@ import { notifyApp } from "@/lib/notify";
 import type { Feature } from "@/types/editins";
 
 type StudioMode = {
+  angle?: string;
   background: string;
   ratio: string;
   style: string;
 };
 
 const defaults: Record<Feature["slug"], StudioMode> = {
-  "foto-produk": { background: "Studio daylight", ratio: "1:1 marketplace", style: "Natural catalog" },
+  "foto-produk": { angle: "Eye-level hero", background: "Outdoor cafe lifestyle", ratio: "9:16 story", style: "Warm lifestyle" },
   "produk-model": { background: "Lifestyle campaign", ratio: "4:5 social", style: "Natural catalog" },
   "gabung-foto": { background: "Unified campaign scene", ratio: "4:5 social", style: "Natural catalog" },
   "foto-miniatur": { background: "Marketplace thumbnail", ratio: "1:1 marketplace", style: "Bold sale" },
@@ -34,7 +35,7 @@ const defaults: Record<Feature["slug"], StudioMode> = {
   "foto-makanan": { background: "Warm table setup", ratio: "4:5 social", style: "Warm kitchen" },
   "buat-mockup": { background: "Realistic mockup scene", ratio: "1:1 marketplace", style: "Natural catalog" },
   "pov-tangan": { background: "Handheld POV", ratio: "4:5 social", style: "Natural catalog" },
-  "foto-4x6": { background: "Soft blue ID background", ratio: "4x6 portrait", style: "Formal ID photo" },
+  "foto-4x6": { background: "Merah", ratio: "4x6", style: "Jas + dasi" },
   "hapus-bg": { background: "Transparent PNG", ratio: "Original", style: "Clean edge" },
   "banner-promo": { background: "Promo shelf", ratio: "4:5 social", style: "Bold sale" },
 };
@@ -42,9 +43,111 @@ const defaults: Record<Feature["slug"], StudioMode> = {
 const styleOptions = [
   { label: "Katalog natural", value: "Natural catalog" },
   { label: "Meja premium", value: "Luxury counter" },
+  { label: "Lifestyle hangat", value: "Warm lifestyle" },
   { label: "Dapur hangat", value: "Warm kitchen" },
   { label: "Promo tegas", value: "Bold sale" },
   { label: "Tepi bersih", value: "Clean edge" },
+];
+
+const productPhotoAngleOptions = [
+  {
+    label: "Eye-level",
+    value: "Eye-level hero",
+    prompt: "Eye-level hero angle as a hard camera direction: camera at product midline, natural horizon, straight commercial perspective, product front remains readable, no top-down look.",
+  },
+  {
+    label: "Low angle",
+    value: "Low angle dramatic",
+    prompt: "Low angle as a hard camera direction: camera below product midline looking slightly upward, product feels taller and premium, visible dramatic side/underside perspective, no flatlay or straight-on catalog fallback, avoid warped packaging.",
+  },
+  {
+    label: "Top view",
+    value: "Top view flatlay",
+    prompt: "True top-down flatlay as a hard camera direction: camera 80-90 degrees above the table, no horizon line, product and props arranged graphically on the surface, no eye-level perspective.",
+  },
+  {
+    label: "45 derajat",
+    value: "45 degree product angle",
+    prompt: "Three-quarter 45-degree angle as a hard camera direction: camera sees both front label and side depth, slightly above table level, clear product volume, not a flat front view and not top-down.",
+  },
+  {
+    label: "Close-up",
+    value: "Close-up macro",
+    prompt: "Close-up macro angle as a hard camera direction: tight crop, product detail dominates frame, shallow depth of field, texture/label sharp, background heavily blurred, no distant full-scene view.",
+  },
+  {
+    label: "Lifestyle POV",
+    value: "Lifestyle POV",
+    prompt: "Lifestyle POV as a hard camera direction: table-side or handheld observer perspective, slightly imperfect natural framing, product in use or just reached-for, strong depth cues, no generic studio front view.",
+  },
+];
+
+type ProductPhotoSceneOption = { label: string; value: string; prompt: string };
+
+type ProductPhotoCategoryOption = {
+  label: string;
+  value: string;
+  prompt: string;
+  scenes: ProductPhotoSceneOption[];
+};
+
+const sceneCafeOutdoor = { label: "Cafe outdoor", value: "Outdoor cafe lifestyle", prompt: "Outdoor cafe terrace or lifestyle table scene, warm daylight, natural wood/stone texture, soft green or urban background blur, premium social media ambience." };
+const sceneStudioClean = { label: "Studio clean", value: "Clean studio product set", prompt: "Clean studio product set with controlled softbox lighting, refined pedestal/table surface, premium shadow, uncluttered background, high-end catalog polish." };
+const scenePremiumIndoor = { label: "Premium indoor", value: "Premium indoor lifestyle", prompt: "Premium indoor lifestyle setting such as boutique counter, modern kitchen, dressing table, or elegant shelf, warm practical lights, refined commercial styling." };
+const sceneCrowdNatural = { label: "Crowd natural", value: "Natural crowd ambience", prompt: "Natural crowd ambience with people or activity only as soft background bokeh, product remains the clear hero, believable busy cafe/marketplace atmosphere." };
+const sceneLuxuryMarble = { label: "Luxury marble", value: "Luxury marble counter", prompt: "Luxury marble counter scene with elegant stone texture, soft reflections, premium beauty or lifestyle campaign mood, refined highlights, clean upscale background." };
+const sceneDarkPremium = { label: "Dark premium", value: "Dark premium editorial", prompt: "Dark premium editorial photoshoot with dramatic low-key lighting, deep shadows, warm rim light, glossy highlights, masculine or luxury brand feeling." };
+const sceneNatureFresh = { label: "Nature fresh", value: "Nature fresh botanical", prompt: "Nature fresh botanical scene with leaves, natural daylight, airy background, clean organic mood, fresh healthy lifestyle styling without clutter." };
+const sceneBoutiqueShelf = { label: "Boutique shelf", value: "Boutique retail shelf", prompt: "Boutique retail shelf or display counter scene, curated props, premium store ambience, soft depth of field, product presented like a high-end retail campaign." };
+const sceneKitchenArtisan = { label: "Kitchen artisan", value: "Kitchen artisan table", prompt: "Kitchen artisan table scene with handmade/UMKM warmth, wooden surface, warm food styling, authentic ingredients or tools as subtle supporting props." };
+const sceneMinimalJapanese = { label: "Minimal Japanese", value: "Minimal Japanese aesthetic", prompt: "Minimal Japanese-inspired aesthetic with calm neutral palette, clean negative space, natural material textures, soft daylight, quiet premium composition." };
+const sceneTropicalDaylight = { label: "Tropical daylight", value: "Tropical daylight lifestyle", prompt: "Tropical daylight lifestyle scene with bright natural light, fresh summer mood, subtle outdoor greenery or poolside ambience, vibrant but premium colors." };
+const sceneUrbanStreet = { label: "Urban street", value: "Urban street campaign", prompt: "Urban street campaign scene with modern city texture, concrete, storefront, or street cafe bokeh, stylish youthful marketplace/social media energy." };
+const sceneWorkspacePremium = { label: "Workspace premium", value: "Premium workspace desk", prompt: "Premium workspace desk scene with laptop, notebook, or office texture as subtle props, clean productivity mood, modern professional lighting." };
+const sceneGiftHamper = { label: "Gift hamper", value: "Gift hamper seasonal", prompt: "Gift hamper or seasonal gifting scene with elegant wrapping, ribbon, festive props, warm premium arrangement, suitable for bundling or limited campaign visuals." };
+
+const productPhotoCategoryOptions: ProductPhotoCategoryOption[] = [
+  { label: "UMKM umum", value: "general", prompt: "General Indonesian UMKM product: make it versatile, premium, and ready for social media selling.", scenes: [sceneCafeOutdoor, sceneStudioClean, scenePremiumIndoor, sceneCrowdNatural, sceneBoutiqueShelf, sceneGiftHamper] },
+  { label: "Makanan", value: "food", prompt: "Food product: emphasize appetizing freshness, warm serving context, believable texture, and natural food styling.", scenes: [sceneKitchenArtisan, sceneCafeOutdoor, sceneDarkPremium, sceneStudioClean, sceneGiftHamper] },
+  { label: "Minuman", value: "drink", prompt: "Drink product: emphasize refreshment, condensation or warmth when relevant, cafe lifestyle, glass/cup context, and inviting lighting.", scenes: [sceneCafeOutdoor, sceneTropicalDaylight, sceneNatureFresh, sceneDarkPremium, sceneStudioClean] },
+  { label: "Skincare", value: "skincare", prompt: "Skincare product: emphasize clean beauty, hygiene, elegant material surfaces, soft glow, botanical or spa atmosphere.", scenes: [sceneLuxuryMarble, sceneNatureFresh, sceneMinimalJapanese, sceneBoutiqueShelf, sceneStudioClean] },
+  { label: "Fashion", value: "fashion", prompt: "Fashion product: emphasize style, editorial composition, fabric/material detail, boutique or urban lifestyle energy.", scenes: [sceneUrbanStreet, sceneBoutiqueShelf, sceneStudioClean, sceneMinimalJapanese, scenePremiumIndoor] },
+  { label: "Parfum", value: "perfume", prompt: "Perfume product: emphasize luxury, reflection, mystery, premium lighting, elegant mood, and refined composition.", scenes: [sceneDarkPremium, sceneLuxuryMarble, sceneBoutiqueShelf, sceneMinimalJapanese, scenePremiumIndoor] },
+  { label: "Gadget", value: "gadget", prompt: "Gadget product: emphasize modern precision, clean technology surface, premium workspace, sharp silhouette, and futuristic polish.", scenes: [sceneWorkspacePremium, sceneStudioClean, sceneDarkPremium, sceneUrbanStreet, sceneMinimalJapanese] },
+  { label: "Aksesoris", value: "accessory", prompt: "Accessory product: emphasize small-object detail, elegant display, premium retail surface, and refined lifestyle styling.", scenes: [sceneBoutiqueShelf, sceneLuxuryMarble, sceneMinimalJapanese, scenePremiumIndoor, sceneDarkPremium] },
+  { label: "Home living", value: "home", prompt: "Home living product: emphasize calm interior mood, natural materials, everyday usability, and refined home styling.", scenes: [sceneMinimalJapanese, scenePremiumIndoor, sceneNatureFresh, sceneStudioClean, sceneGiftHamper] },
+];
+
+const productPhotoStyleGuidance: Record<string, string> = {
+  "Natural catalog": "Natural catalog look: product-first, realistic color, clean lighting, minimal props, clear ecommerce readability.",
+  "Luxury counter": "Luxury counter look: premium materials, elegant reflections, warm highlights, refined magazine-ad composition.",
+  "Warm lifestyle": "Warm lifestyle look: cozy commercial scene, human-friendly atmosphere, cinematic depth, inviting social media feel.",
+  "Warm kitchen": "Warm kitchen look: appetizing tabletop/kitchen ambience, warm light, authentic food or beverage styling when relevant.",
+  "Bold sale": "Bold sale look: stronger contrast, punchy composition, energetic promotional hierarchy, but still premium and not cluttered.",
+  "Clean edge": "Clean edge look: crisp cutout-like product clarity, tidy background, sharp silhouette, clean marketplace finish.",
+};
+
+const productPhotoTypographyGuidance: Record<string, string> = {
+  general: "Editorial social-commerce headline, varied scale, stylish line breaks, not stiff centered text.",
+  food: "Warm rounded/humanist headline, playful clean breaks, appetizing scale contrast.",
+  drink: "Fresh airy bold headline, relaxed spacing, dynamic staggered lines.",
+  skincare: "Clean beauty serif/light sans headline, soft premium spacing.",
+  fashion: "Fashion editorial headline, oversized/asymmetrical, strong magazine contrast.",
+  perfume: "Luxury serif headline, cinematic spacing, elegant scale contrast.",
+  gadget: "Sharp geometric sans headline, precise alignment, bold tech contrast.",
+  accessory: "Boutique serif or premium sans, refined breaks, delicate contrast.",
+  home: "Calm editorial serif/humanist sans, spacious relaxed hierarchy.",
+};
+
+const pasFotoBackgroundOptions = ["Merah", "Biru", "Putih", "Kuning", "Abu-abu", "Hitam putih"];
+
+const pasFotoClothingOptions = ["Jas + dasi", "Blazer", "Kemeja", "Sekolah"];
+
+const pasFotoSizeOptions = [
+  { label: "2x3", value: "2x3" },
+  { label: "3x4", value: "3x4" },
+  { label: "4x6", value: "4x6" },
+  { label: "4x4", value: "4x4" },
 ];
 
 export function GenerationStudio({ feature }: { feature: Feature }) {
@@ -55,23 +158,22 @@ export function GenerationStudio({ feature }: { feature: Feature }) {
   const [instruction, setInstruction] = useState("");
   const [copywriting, setCopywriting] = useState("");
   const [callToAction, setCallToAction] = useState("");
+  const [productCategory, setProductCategory] = useState(productPhotoCategoryOptions[0].value);
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreviewUrl, setLogoPreviewUrl] = useState<string | null>(null);
   const [logoInputKey, setLogoInputKey] = useState(0);
-  const [templateFile, setTemplateFile] = useState<File | null>(null);
-  const [templatePreviewUrl, setTemplatePreviewUrl] = useState<string | null>(null);
-  const [templateInputKey, setTemplateInputKey] = useState(0);
   const [promoText, setPromoText] = useState("");
   const [useMockMode, setUseMockMode] = useState(true);
-  const [photoLimit, setPhotoLimit] = useState(feature.slug === "foto-produk" ? 1 : 5);
   const [isGenerating, setGenerating] = useState(false);
   const [progress, setProgress] = useState(0);
   const [mode, setMode] = useState(defaults[feature.slug]);
   const [result, setResult] = useState<GenerateImageResult | null>(null);
+  const [ctaOverlayUrl, setCtaOverlayUrl] = useState<string | null>(null);
   const [isPreviewOpen, setPreviewOpen] = useState(false);
   const [quotaDialog, setQuotaDialog] = useState<{ message: string; upgradeUrl: string } | null>(null);
 
   const isBanner = feature.slug === "banner-promo";
+  const isProductPhoto = feature.slug === "foto-produk";
   const isPhoto46 = feature.slug === "foto-4x6";
   const isRemoveBg = feature.slug === "hapus-bg";
   const isProductModel = feature.slug === "produk-model" || feature.slug === "gabung-foto" || feature.slug === "face-swap";
@@ -80,21 +182,25 @@ export function GenerationStudio({ feature }: { feature: Feature }) {
   const isFashion = feature.slug === "foto-fashion";
   const minRequiredFiles = isProductModel ? 2 : 1;
   const maxFiles = 5;
-  const maxSelectedFiles = feature.slug === "foto-produk" ? photoLimit : maxFiles;
+  const maxSelectedFiles = isProductPhoto || isPhoto46 ? 1 : maxFiles;
   const isGenerateDisabled = isGenerating || isLoading || selectedFiles.length < minRequiredFiles;
-  const ratioOptions = feature.slug === "foto-produk"
+  const selectedProductCategory = productPhotoCategoryOptions.find((category) => category.value === productCategory) ?? productPhotoCategoryOptions[0];
+  const productPhotoSceneOptions = selectedProductCategory.scenes;
+  const selectedProductPhotoScene = productPhotoSceneOptions.find((scene) => scene.value === mode.background) ?? productPhotoSceneOptions[0];
+  const ratioOptions = isProductPhoto
     ? [
         { label: "1:1", value: "1:1 marketplace" },
         { label: "4:5", value: "4:5 social" },
         { label: "9:16", value: "9:16 story" },
       ]
-    : [
-        { label: "Kotak", value: "1:1 marketplace" },
-        ...(isPhoto46 ? [{ label: "4x6", value: "4x6 portrait" }] : []),
-        { label: "Sosial", value: "4:5 social" },
-        { label: "Banner", value: "16:9 banner" },
-        { label: "Asli", value: "Original" },
-      ];
+    : isPhoto46
+      ? pasFotoSizeOptions
+      : [
+          { label: "Kotak", value: "1:1 marketplace" },
+          { label: "Sosial", value: "4:5 social" },
+          { label: "Banner", value: "16:9 banner" },
+          { label: "Asli", value: "Original" },
+        ];
 
   useEffect(() => {
     if (selectedFiles.length === 0) {
@@ -119,18 +225,6 @@ export function GenerationStudio({ feature }: { feature: Feature }) {
 
     return () => URL.revokeObjectURL(objectUrl);
   }, [logoFile]);
-
-  useEffect(() => {
-    if (!templateFile) {
-      setTemplatePreviewUrl(null);
-      return;
-    }
-
-    const objectUrl = URL.createObjectURL(templateFile);
-    setTemplatePreviewUrl(objectUrl);
-
-    return () => URL.revokeObjectURL(objectUrl);
-  }, [templateFile]);
 
   useEffect(() => {
     if (!isPreviewOpen && !quotaDialog) return;
@@ -164,9 +258,45 @@ export function GenerationStudio({ feature }: { feature: Feature }) {
 
   const previewLabel = useMemo(() => {
     if (isRemoveBg) return "PNG transparan";
+    if (isPhoto46) return mode.ratio;
     if (isBanner) return mode.ratio;
     return mode.background;
-  }, [isBanner, isRemoveBg, mode.background, mode.ratio]);
+  }, [isBanner, isPhoto46, isRemoveBg, mode.background, mode.ratio]);
+
+  useEffect(() => {
+    let isCancelled = false;
+    let objectUrl: string | null = null;
+
+    setCtaOverlayUrl(null);
+
+    const ctaText = callToAction.trim();
+
+    if (!result || !isProductPhoto || !ctaText) {
+      return () => {
+        isCancelled = true;
+      };
+    }
+
+    createProductCtaOverlayUrl(result.download_url ?? result.output_url, ctaText)
+      .then((url) => {
+        if (isCancelled) {
+          URL.revokeObjectURL(url);
+          return;
+        }
+
+        objectUrl = url;
+        setCtaOverlayUrl(url);
+      })
+      .catch(() => undefined);
+
+    return () => {
+      isCancelled = true;
+
+      if (objectUrl) {
+        URL.revokeObjectURL(objectUrl);
+      }
+    };
+  }, [callToAction, isProductPhoto, result]);
 
   async function handleGenerate() {
     if (isLoading) {
@@ -229,10 +359,9 @@ export function GenerationStudio({ feature }: { feature: Feature }) {
         feature: feature.slug,
         instruction: preparedInstruction,
         aspectRatio: aspectRatioFor(mode.ratio),
-        mockMode: useMockMode,
+        mockMode: isPhoto46 || isProductPhoto ? false : useMockMode,
         images: selectedFiles,
         logoImage: feature.slug === "foto-produk" ? logoFile : null,
-        templateImage: feature.slug === "foto-produk" ? templateFile : null,
       });
 
       setProgress(100);
@@ -299,24 +428,6 @@ export function GenerationStudio({ feature }: { feature: Feature }) {
     setQuotaDialog(null);
   }
 
-  function handleTemplateChange(fileList: FileList | null) {
-    const file = fileList?.[0] ?? null;
-
-    if (file && !file.type.startsWith("image/")) {
-      notifyApp({
-        title: "Template harus gambar",
-        detail: "Upload template dalam format JPG, PNG, atau WebP sebagai referensi layout visual.",
-        tone: "warning",
-      });
-      setTemplateInputKey((current) => current + 1);
-      return;
-    }
-
-    setTemplateFile(file);
-    setResult(null);
-    setQuotaDialog(null);
-  }
-
   function handleRemoveFile() {
     setSelectedFiles([]);
     setUploadInputKey((current) => current + 1);
@@ -331,24 +442,42 @@ export function GenerationStudio({ feature }: { feature: Feature }) {
     setResult(null);
   }
 
-  function handleRemoveTemplate() {
-    setTemplateFile(null);
-    setTemplateInputKey((current) => current + 1);
+  function updateMode(patch: Partial<StudioMode>) {
+    setMode((current) => ({ ...current, ...patch }));
     setResult(null);
+    setPreviewOpen(false);
   }
 
   function buildInstruction() {
     const baseInstruction = instruction.trim() || defaultInstructionFor(feature.slug);
 
     if (feature.slug === "foto-produk") {
+      const sceneGuidance = selectedProductPhotoScene.prompt;
+      const styleGuidance = productPhotoStyleGuidance[mode.style] ?? mode.style;
+      const typographyGuidance = productPhotoTypographyGuidance[selectedProductCategory.value] ?? productPhotoTypographyGuidance.general;
+      const angleGuidance = productPhotoAngleOptions.find((angle) => angle.value === mode.angle)?.prompt ?? productPhotoAngleOptions[0].prompt;
+      const productCopyText = copywriting.trim();
+      const ctaText = callToAction.trim();
+      const textContract = [
+        "TEXT:",
+        productCopyText ? `PRODUCT_COPY exact: ${JSON.stringify(productCopyText)}` : "PRODUCT_COPY: none",
+        ctaText ? `CTA_TEXT app overlay only: ${JSON.stringify(ctaText)}. Do not render it; leave clean lower-right space.` : "CTA_TEXT: none. Do not create CTA text/buttons.",
+        `Typography: ${typographyGuidance}`,
+        "Render PRODUCT_COPY only, exact spelling, expressive headline hierarchy, varied scale/weight, no extra/random/stale text.",
+      ].join("\n");
+
       return [
         baseInstruction,
-        copywriting.trim() ? `Copywriting to include: ${copywriting.trim()}` : "No extra copywriting unless it improves the ecommerce layout.",
-        callToAction.trim() ? `Call to action text: ${callToAction.trim()}` : "No call to action text unless needed.",
+        `Product category: ${selectedProductCategory.label}. Category guidance: ${selectedProductCategory.prompt}`,
+        textContract,
         logoFile ? "A separate logo image is provided as the final reference. Place it subtly and keep the logo accurate." : "No logo image provided.",
-        `Reference image order: images 1-${selectedFiles.length} are product photos.${logoFile ? ` Image ${selectedFiles.length + 1} is the logo.` : ""}${templateFile ? ` Image ${selectedFiles.length + (logoFile ? 2 : 1)} is the template layout reference.` : ""}`,
-        templateFile ? "Template reference is the main layout blueprint/acuan utama, not just inspiration. Recreate the uploaded template structure as closely as possible: same composition, subject position, crop, text placement, spacing, color mood, visual hierarchy, poster structure, and background style. Replace only the template product/subject with the uploaded product while keeping the template design logic." : "No template reference image provided.",
-        `Use ${selectedFiles.length} product photo reference(s). Selected style: ${mode.style}. Ratio: ${mode.ratio}.`,
+        `Reference image order: images 1-${selectedFiles.length} are product photos.${logoFile ? ` Image ${selectedFiles.length + 1} is the logo.` : ""}`,
+        `Use ${selectedFiles.length} product photo reference(s). Ratio: ${mode.ratio}.`,
+        `Camera angle HARD REQUIREMENT: ${angleGuidance} The selected angle must be visually obvious; do not fall back to a generic front-facing catalog shot. Keep product geometry realistic and label readable.`,
+        `Photoshoot scene direction: ${sceneGuidance}`,
+        `Visual style direction: ${styleGuidance}`,
+        "Create a premium social-media product photoshoot with cinematic depth of field, realistic foreground product focus, beautiful commercial lighting, believable shadows/reflections, expressive headline placement, and clean space for the app CTA overlay.",
+        "Keep the uploaded product packaging, label shape, color identity, and visible brand cues accurate. Do not invent unrelated products, logos, labels, or random words.",
       ].join("\n");
     }
 
@@ -405,10 +534,10 @@ export function GenerationStudio({ feature }: { feature: Feature }) {
 
     if (isPhoto46) {
       return [
-        "Create an Indonesian formal 4x6 ID photo from the uploaded face photo.",
-        "Use portrait composition, centered face, clean shoulders, soft neutral blue background, natural skin tone, and professional lighting.",
+        "Create an Indonesian formal ID/pass photo from the uploaded face photo.",
+        "Use portrait composition, centered face, clean shoulders, natural skin tone, and professional lighting.",
         "Do not change the person's identity, facial structure, or important facial features.",
-        `Selected style: ${mode.style}. Background: ${mode.background}.`,
+        `Background color: ${mode.background}. Clothing mode: ${mode.style}. Output size: ${mode.ratio}.`,
         `User instruction: ${baseInstruction}`,
       ].join("\n");
     }
@@ -428,71 +557,55 @@ export function GenerationStudio({ feature }: { feature: Feature }) {
     ].join("\n");
   }
 
+  const resultOutputUrl = result ? ctaOverlayUrl ?? result.output_url : null;
+  const resultDownloadUrl = result ? ctaOverlayUrl ?? result.download_url ?? result.output_url : null;
+
   return (
     <div className="grid items-start gap-6 lg:grid-cols-[0.82fr_1.18fr]">
-      <Panel className="border-border/70 bg-card p-5 shadow-soft sm:p-6">
+      <Panel className={isProductPhoto ? "border-primary/12 bg-[linear-gradient(180deg,hsl(var(--card))_0%,hsl(var(--muted)/.24)_100%)] p-5 shadow-soft sm:p-6" : "border-border/70 bg-card p-5 shadow-soft sm:p-6"}>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
-            <p className="text-sm font-semibold text-foreground">{feature.title}</p>
-            <Badge tone={feature.credits > 1 ? "warning" : "success"}>{feature.credits} kredit</Badge>
+            <div>
+              <p className="text-sm font-semibold text-foreground">{feature.title}</p>
+              {isProductPhoto ? <p className="mt-1 text-xs font-semibold text-muted-foreground">Photoshoot produk siap sosmed</p> : null}
+            </div>
+            {!isPhoto46 && !isProductPhoto ? <Badge tone={feature.credits > 1 ? "warning" : "success"}>{feature.credits} kredit</Badge> : null}
           </div>
-          <div className="grid grid-cols-2 gap-1 rounded-ui border border-border/55 bg-background/40 p-1">
-            <button
-              type="button"
-              aria-pressed={useMockMode}
-              className={
-                useMockMode
-                  ? "min-h-9 rounded-ui bg-primary px-3 text-xs font-semibold text-primary-foreground shadow-soft"
-                  : "min-h-9 rounded-ui px-3 text-xs font-semibold text-muted-foreground transition hover:bg-muted hover:text-foreground"
-              }
-              onClick={() => setUseMockMode(true)}
-            >
-              Mockup
-            </button>
-            <button
-              type="button"
-              aria-pressed={!useMockMode}
-              className={
-                !useMockMode
-                  ? "min-h-9 rounded-ui bg-primary px-3 text-xs font-semibold text-primary-foreground shadow-soft"
-                  : "min-h-9 rounded-ui px-3 text-xs font-semibold text-muted-foreground transition hover:bg-muted hover:text-foreground"
-              }
-              onClick={() => setUseMockMode(false)}
-            >
-              Mode utama
-            </button>
-          </div>
+          {!isPhoto46 && !isProductPhoto ? (
+            <div className="grid grid-cols-2 gap-1 rounded-ui border border-border/55 bg-background/40 p-1">
+              <button
+                type="button"
+                aria-pressed={useMockMode}
+                className={
+                  useMockMode
+                    ? "min-h-9 rounded-ui bg-primary px-3 text-xs font-semibold text-primary-foreground shadow-soft"
+                    : "min-h-9 rounded-ui px-3 text-xs font-semibold text-muted-foreground transition hover:bg-muted hover:text-foreground"
+                }
+                onClick={() => setUseMockMode(true)}
+              >
+                Mockup
+              </button>
+              <button
+                type="button"
+                aria-pressed={!useMockMode}
+                className={
+                  !useMockMode
+                    ? "min-h-9 rounded-ui bg-primary px-3 text-xs font-semibold text-primary-foreground shadow-soft"
+                    : "min-h-9 rounded-ui px-3 text-xs font-semibold text-muted-foreground transition hover:bg-muted hover:text-foreground"
+                }
+                onClick={() => setUseMockMode(false)}
+              >
+                Mode utama
+              </button>
+            </div>
+          ) : null}
         </div>
 
         <div className="mt-6 space-y-6">
-          <StudioStep number={1} title="Bahan gambar" meta={isProductModel ? `Min 2, max ${maxFiles}` : feature.slug === "foto-produk" ? `${photoLimit} foto` : `Max ${maxFiles}`}>
-            {feature.slug === "foto-produk" ? (
-              <div className="mb-3 rounded-ui border border-border/55 bg-background/55 p-3">
-                <div className="mb-2 flex items-center justify-between gap-3">
-                  <p className="text-xs font-black uppercase tracking-[0.14em] text-muted-foreground">Jumlah foto</p>
-                  <span className="text-xs font-bold text-primary">Maks 5</span>
-                </div>
-                <div className="grid grid-cols-5 gap-2">
-                  {[1, 2, 3, 4, 5].map((count) => (
-                    <button
-                      key={count}
-                      type="button"
-                      aria-pressed={photoLimit === count}
-                      className={
-                        photoLimit === count
-                          ? "min-h-9 rounded-ui border border-primary/15 bg-primary px-2 text-xs font-black text-primary-foreground shadow-soft"
-                          : "min-h-9 rounded-ui border border-border/45 bg-card/80 px-2 text-xs font-black text-muted-foreground transition hover:bg-muted hover:text-foreground"
-                      }
-                      onClick={() => setPhotoLimit(count)}
-                    >
-                      {count}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            ) : null}
+          <StudioStep number={1} title="Bahan gambar" meta={isProductModel ? `Min 2, max ${maxFiles}` : isProductPhoto || isPhoto46 ? undefined : `Max ${maxFiles}`}>
             <div className="relative">
-              <label className="grid min-h-24 cursor-pointer place-items-center overflow-hidden rounded-ui border border-dashed border-input/70 bg-background/75 p-3 text-center transition hover:border-primary/45 hover:bg-primary/5">
+              {isProductPhoto ? <p className="mb-2 text-[11px] font-black uppercase tracking-[0.14em] text-muted-foreground">Foto produk utama</p> : null}
+              <label className={isProductPhoto ? "grid min-h-32 cursor-pointer place-items-center overflow-hidden rounded-ui border border-dashed border-primary/35 bg-background/80 p-3 text-center shadow-soft transition hover:border-primary/60 hover:bg-primary/5" : "grid min-h-24 cursor-pointer place-items-center overflow-hidden rounded-ui border border-dashed border-input/70 bg-background/75 p-3 text-center transition hover:border-primary/45 hover:bg-primary/5"}>
                 <input
                   key={uploadInputKey}
                   className="sr-only"
@@ -523,8 +636,9 @@ export function GenerationStudio({ feature }: { feature: Feature }) {
                       <span className="grid h-11 w-11 place-items-center rounded-ui bg-muted text-muted-foreground">
                         <ImageUp className="h-5 w-5" />
                       </span>
-                      <span className="max-w-full break-words text-xs font-semibold text-muted-foreground">
-                        {isProductModel ? "Klik untuk upload produk + model/referensi" : "Klik untuk upload gambar"}
+                      <span className="grid max-w-full gap-1 break-words text-xs font-semibold text-muted-foreground">
+                        <span>{isProductPhoto ? "Upload foto produk" : isProductModel ? "Klik untuk upload produk + model/referensi" : "Klik untuk upload gambar"}</span>
+                        {isProductPhoto ? <span className="text-[11px] font-medium text-muted-foreground/75">JPG, PNG, atau WebP</span> : null}
                       </span>
                     </>
                   )}
@@ -542,39 +656,11 @@ export function GenerationStudio({ feature }: { feature: Feature }) {
                 </button>
               ) : null}
             </div>
-          </StudioStep>
-
-          {isBanner ? (
-            <StudioStep number={2} title="Teks promo">
-              <Input
-                id="headline"
-                maxLength={20}
-                placeholder="DISKON 30%"
-                value={promoText}
-                onChange={(event) => setPromoText(event.target.value)}
-              />
-            </StudioStep>
-          ) : null}
-
-          {feature.slug === "foto-produk" ? (
-            <StudioStep number={2} title="Materi jualan">
-              <div className="grid gap-3">
-                <Input
-                  id="copywriting"
-                  maxLength={120}
-                  placeholder="Contoh: Kulit lembut, nyaman dipakai seharian"
-                  value={copywriting}
-                  onChange={(event) => setCopywriting(event.target.value)}
-                />
-                <Input
-                  id="call-to-action"
-                  maxLength={40}
-                  placeholder="Contoh: Beli Sekarang"
-                  value={callToAction}
-                  onChange={(event) => setCallToAction(event.target.value)}
-                />
+            {isProductPhoto ? (
+              <div className="mt-4 grid gap-3">
                 <div className="relative">
-                  <label className="grid min-h-20 cursor-pointer place-items-center overflow-hidden rounded-ui border border-dashed border-input/70 bg-background/75 p-3 text-center transition hover:border-primary/45 hover:bg-primary/5">
+                  <p className="mb-2 text-[11px] font-black uppercase tracking-[0.14em] text-muted-foreground">Logo</p>
+                  <label className="grid min-h-28 cursor-pointer place-items-center overflow-hidden rounded-ui border border-dashed border-input/60 bg-background/75 p-3 text-center transition hover:border-primary/45 hover:bg-primary/5">
                     <input
                       key={logoInputKey}
                       className="sr-only"
@@ -591,7 +677,7 @@ export function GenerationStudio({ feature }: { feature: Feature }) {
                     ) : (
                       <span className="grid place-items-center gap-2 text-xs font-semibold text-muted-foreground">
                         <ImageIcon className="h-5 w-5" />
-                        Upload logo brand opsional
+                        Upload logo opsional
                       </span>
                     )}
                   </label>
@@ -607,107 +693,202 @@ export function GenerationStudio({ feature }: { feature: Feature }) {
                     </button>
                   ) : null}
                 </div>
-                <div className="relative">
-                  <label className="grid min-h-24 cursor-pointer place-items-center overflow-hidden rounded-ui border border-dashed border-input/70 bg-background/75 p-3 text-center transition hover:border-primary/45 hover:bg-primary/5">
-                    <input
-                      key={templateInputKey}
-                      className="sr-only"
-                      type="file"
-                      accept="image/png,image/jpeg,image/webp"
-                      onChange={(event) => handleTemplateChange(event.target.files)}
-                    />
-                    {templatePreviewUrl ? (
-                      <span className="grid w-full place-items-center gap-2">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={templatePreviewUrl} alt="Preview template" className="max-h-28 w-auto object-contain" />
-                        <span className="text-xs font-semibold text-muted-foreground">Template acuan utama</span>
-                      </span>
-                    ) : (
-                      <span className="grid place-items-center gap-2 text-xs font-semibold text-muted-foreground">
-                        <ImageUp className="h-5 w-5" />
-                        Upload template acuan opsional
-                      </span>
-                    )}
-                  </label>
-                  {templatePreviewUrl ? (
-                    <button
-                      type="button"
-                      className="absolute right-2 top-2 grid h-8 w-8 place-items-center rounded-ui border border-destructive/20 bg-background/90 text-destructive shadow-soft transition hover:bg-destructive hover:text-destructive-foreground"
-                      title="Hapus template"
-                      aria-label="Hapus template"
-                      onClick={handleRemoveTemplate}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  ) : null}
-                </div>
+              </div>
+            ) : null}
+          </StudioStep>
+
+          {isBanner ? (
+            <StudioStep number={2} title="Teks promo">
+              <Input
+                id="headline"
+                maxLength={20}
+                placeholder="DISKON 30%"
+                value={promoText}
+                onChange={(event) => setPromoText(event.target.value)}
+              />
+            </StudioStep>
+          ) : null}
+
+          {isProductPhoto ? (
+            <StudioStep number={2} title="Materi jualan">
+              <div className="grid gap-3">
+                <label htmlFor="copywriting" className="text-xs font-bold text-muted-foreground">Teks utama produk</label>
+                <Input
+                  id="copywriting"
+                  className="bg-background/85"
+                  maxLength={120}
+                  placeholder="Contoh: Kulit lembut, nyaman dipakai seharian"
+                  value={copywriting}
+                  onChange={(event) => {
+                    setCopywriting(event.target.value);
+                    setResult(null);
+                    setPreviewOpen(false);
+                  }}
+                />
               </div>
             </StudioStep>
           ) : null}
 
-          <StudioStep number={isBanner ? 3 : feature.slug === "foto-produk" ? 3 : 2} title="Instruksi visual">
-            <div className="relative">
-              <Textarea
-                className="min-h-32 pb-11 soft-scrollbar"
-                id="notes"
-                value={instruction}
-                placeholder={
-                  isPhoto46
-                    ? "Contoh: latar biru muda, wajah tetap natural, kemeja terlihat rapi."
-                    : isRemoveBg
-                      ? "Contoh: hapus background, pertahankan detail rambut/produk, hasil bersih siap PNG."
-                    : "Contoh: latar cerah, bayangan natural, warna produk tetap akurat."
-                }
-                onChange={(event) => setInstruction(event.target.value)}
-              />
-              <span className="pointer-events-none absolute bottom-2 left-2 grid h-8 w-8 place-items-center rounded-ui border border-primary/15 bg-primary/10 text-primary/80">
-                <Wand2 className="h-4 w-4" />
-              </span>
-            </div>
-          </StudioStep>
+          {isProductPhoto ? (
+            <StudioStep number={3} title="CTA">
+              <div className="grid gap-3">
+                <label htmlFor="call-to-action" className="text-xs font-bold text-muted-foreground">Ajakan aksi</label>
+                <Input
+                  id="call-to-action"
+                  className="bg-background/85"
+                  maxLength={100}
+                  placeholder="Contoh: Beli Sekarang, stok terbatas dan siap kirim hari ini"
+                  value={callToAction}
+                  onChange={(event) => {
+                    setCallToAction(event.target.value);
+                    setResult(null);
+                    setPreviewOpen(false);
+                  }}
+                />
+              </div>
+            </StudioStep>
+          ) : null}
 
-          <StudioStep number={isBanner ? 4 : feature.slug === "foto-produk" ? 4 : 3} title="Gaya visual dan rasio">
-            <div className="grid gap-3">
-              <div className="grid grid-cols-2 gap-2 rounded-ui border border-border/65 bg-background/75 p-1.5 sm:grid-cols-3">
-                {styleOptions.map((style) => (
-                  <button
-                    key={style.value}
-                    type="button"
-                    aria-pressed={mode.style === style.value}
-                    className={
-                      mode.style === style.value
-                        ? "min-h-11 rounded-ui border border-primary/15 bg-[linear-gradient(135deg,hsl(var(--primary)/.92)_0%,hsl(var(--primary)/.82)_48%,hsl(var(--accent)/.62)_100%)] px-2 py-2 text-xs font-semibold leading-4 text-primary-foreground shadow-soft"
-                        : "min-h-11 rounded-ui bg-card/80 px-2 py-2 text-xs font-semibold leading-4 text-muted-foreground transition hover:bg-muted hover:text-foreground"
-                    }
-                    onClick={() => setMode((current) => ({ ...current, style: style.value }))}
-                  >
-                    {style.label}
-                  </button>
-                ))}
+          {!isPhoto46 ? (
+            <StudioStep number={isBanner ? 3 : isProductPhoto ? 4 : 2} title="Instruksi visual">
+              <div className="relative">
+                <Textarea
+                  className="min-h-32 pb-11 soft-scrollbar"
+                  id="notes"
+                  value={instruction}
+                  placeholder={
+                    isRemoveBg
+                      ? "Contoh: hapus background, pertahankan detail rambut/produk, hasil bersih siap PNG."
+                      : isProductPhoto
+                        ? "Contoh: suasana cafe outdoor, meja kayu, cahaya pagi, jangan ubah label produk."
+                      : "Contoh: latar cerah, bayangan natural, warna produk tetap akurat."
+                  }
+                  onChange={(event) => setInstruction(event.target.value)}
+                />
+                <span className="pointer-events-none absolute bottom-2 left-2 grid h-8 w-8 place-items-center rounded-ui border border-primary/15 bg-primary/10 text-primary/80">
+                  <Wand2 className="h-4 w-4" />
+                </span>
               </div>
-              <div
-                className={
-                  isPhoto46
-                    ? "grid grid-cols-5 gap-2 rounded-ui border border-border/55 bg-background/40 p-1.5"
-                    : "grid grid-cols-4 gap-2 rounded-ui border border-border/65 bg-background/75 p-1.5"
-                }
-              >
-                {ratioOptions.map((ratio) => (
-                  <button
-                    key={ratio.value}
-                    type="button"
-                    className={
-                      mode.ratio === ratio.value
-                        ? "min-h-10 rounded-ui border border-primary/15 bg-[linear-gradient(135deg,hsl(var(--primary)/.92)_0%,hsl(var(--primary)/.82)_48%,hsl(var(--accent)/.62)_100%)] px-2 text-xs font-semibold text-primary-foreground shadow-soft"
-                        : "min-h-10 rounded-ui bg-card/80 px-2 text-xs font-semibold text-muted-foreground transition hover:bg-muted hover:text-foreground"
-                    }
-                    onClick={() => setMode((current) => ({ ...current, ratio: ratio.value }))}
-                  >
-                    {ratio.label}
-                  </button>
-                ))}
+            </StudioStep>
+          ) : null}
+
+          <StudioStep number={isPhoto46 ? 2 : isBanner ? 4 : isProductPhoto ? 5 : 3} title={isPhoto46 ? "Pilihan pas foto" : "Gaya visual dan rasio"}>
+            {isPhoto46 ? (
+              <div className="grid gap-4">
+                <OptionGroup label="Pilih warna background">
+                  {pasFotoBackgroundOptions.map((background) => (
+                    <OptionButton
+                      key={background}
+                      isActive={mode.background === background}
+                      onClick={() => updateMode({ background })}
+                    >
+                      {background}
+                    </OptionButton>
+                  ))}
+                </OptionGroup>
+                <OptionGroup label="Mode pakaian">
+                  {pasFotoClothingOptions.map((style) => (
+                    <OptionButton
+                      key={style}
+                      isActive={mode.style === style}
+                      onClick={() => updateMode({ style })}
+                    >
+                      {style}
+                    </OptionButton>
+                  ))}
+                </OptionGroup>
+                <OptionGroup label="Ukuran output">
+                  {ratioOptions.map((ratio) => (
+                    <OptionButton
+                      key={ratio.value}
+                      isActive={mode.ratio === ratio.value}
+                      onClick={() => updateMode({ ratio: ratio.value })}
+                    >
+                      {ratio.label}
+                    </OptionButton>
+                  ))}
+                </OptionGroup>
               </div>
-            </div>
+            ) : (
+              <div className="grid gap-3">
+                {isProductPhoto ? (
+                  <>
+                    <div className="grid gap-2">
+                      <label htmlFor="product-category" className="text-xs font-bold text-muted-foreground">Jenis produk</label>
+                      <Select
+                        id="product-category"
+                        className="bg-background/85"
+                        value={productCategory}
+                        onChange={(event) => {
+                          const nextCategory = productPhotoCategoryOptions.find((category) => category.value === event.target.value) ?? productPhotoCategoryOptions[0];
+                          setProductCategory(nextCategory.value);
+                          updateMode({ background: nextCategory.scenes[0].value });
+                        }}
+                      >
+                        {productPhotoCategoryOptions.map((category) => (
+                          <option key={category.value} value={category.value}>{category.label}</option>
+                        ))}
+                      </Select>
+                    </div>
+                    <OptionGroup label={`Skenario ${selectedProductCategory.label}`}>
+                      {productPhotoSceneOptions.map((scene) => (
+                        <OptionButton
+                          key={scene.value}
+                          isActive={selectedProductPhotoScene.value === scene.value}
+                          onClick={() => updateMode({ background: scene.value })}
+                        >
+                          {scene.label}
+                        </OptionButton>
+                      ))}
+                    </OptionGroup>
+                    <OptionGroup label="Angle kamera">
+                      {productPhotoAngleOptions.map((angle) => (
+                        <OptionButton
+                          key={angle.value}
+                          isActive={(mode.angle ?? productPhotoAngleOptions[0].value) === angle.value}
+                          onClick={() => updateMode({ angle: angle.value })}
+                        >
+                          {angle.label}
+                        </OptionButton>
+                      ))}
+                    </OptionGroup>
+                  </>
+                ) : null}
+                <div className="grid grid-cols-2 gap-2 rounded-ui border border-border/65 bg-background/75 p-1.5 sm:grid-cols-3">
+                  {styleOptions.map((style) => (
+                    <button
+                      key={style.value}
+                      type="button"
+                      aria-pressed={mode.style === style.value}
+                      className={
+                        mode.style === style.value
+                          ? "min-h-11 rounded-ui border border-primary/15 bg-[linear-gradient(135deg,hsl(var(--primary)/.92)_0%,hsl(var(--primary)/.82)_48%,hsl(var(--accent)/.62)_100%)] px-2 py-2 text-xs font-semibold leading-4 text-primary-foreground shadow-soft"
+                          : "min-h-11 rounded-ui bg-card/80 px-2 py-2 text-xs font-semibold leading-4 text-muted-foreground transition hover:bg-muted hover:text-foreground"
+                      }
+                      onClick={() => updateMode({ style: style.value })}
+                    >
+                      {style.label}
+                    </button>
+                  ))}
+                </div>
+                <div className="grid grid-cols-4 gap-2 rounded-ui border border-border/65 bg-background/75 p-1.5">
+                  {ratioOptions.map((ratio) => (
+                    <button
+                      key={ratio.value}
+                      type="button"
+                      className={
+                        mode.ratio === ratio.value
+                          ? "min-h-10 rounded-ui border border-primary/15 bg-[linear-gradient(135deg,hsl(var(--primary)/.92)_0%,hsl(var(--primary)/.82)_48%,hsl(var(--accent)/.62)_100%)] px-2 text-xs font-semibold text-primary-foreground shadow-soft"
+                          : "min-h-10 rounded-ui bg-card/80 px-2 text-xs font-semibold text-muted-foreground transition hover:bg-muted hover:text-foreground"
+                      }
+                      onClick={() => updateMode({ ratio: ratio.value })}
+                    >
+                      {ratio.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </StudioStep>
         </div>
 
@@ -726,11 +907,11 @@ export function GenerationStudio({ feature }: { feature: Feature }) {
               setInstruction("");
               setCopywriting("");
               setCallToAction("");
+              setProductCategory(productPhotoCategoryOptions[0].value);
               setLogoFile(null);
               setLogoInputKey((current) => current + 1);
-              setTemplateFile(null);
-              setTemplateInputKey((current) => current + 1);
               setPromoText("");
+              setMode(defaults[feature.slug]);
               setResult(null);
               setPreviewOpen(false);
               setQuotaDialog(null);
@@ -765,7 +946,7 @@ export function GenerationStudio({ feature }: { feature: Feature }) {
             <div className="relative z-10 grid w-full max-w-sm gap-4">
               <div className="relative overflow-hidden rounded-ui border border-border/55 bg-card shadow-panel">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={result.output_url} alt={`Hasil ${feature.title}`} className="h-auto w-full object-contain" />
+                <img src={resultOutputUrl ?? result.output_url} alt={`Hasil ${feature.title}`} className="h-auto w-full object-contain" />
                 <div className="absolute right-2 top-2 flex gap-2">
                   <button
                     type="button"
@@ -778,7 +959,7 @@ export function GenerationStudio({ feature }: { feature: Feature }) {
                   </button>
                   <a
                     className="grid h-10 w-10 place-items-center rounded-ui border border-border/55 bg-background/90 text-foreground shadow-soft backdrop-blur transition hover:bg-primary hover:text-primary-foreground"
-                    href={result.download_url ?? result.output_url}
+                    href={resultDownloadUrl ?? result.download_url ?? result.output_url}
                     download={`editins-${result.generation_id}.png`}
                     title="Download foto"
                     aria-label="Download foto"
@@ -789,7 +970,7 @@ export function GenerationStudio({ feature }: { feature: Feature }) {
               </div>
               <div>
                 <p className="text-sm font-semibold text-foreground">Hasil siap</p>
-                <p className="mt-1 text-sm font-medium text-muted-foreground">{result.model}</p>
+                {!isPhoto46 && !isProductPhoto ? <p className="mt-1 text-sm font-medium text-muted-foreground">{result.model}</p> : null}
               </div>
             </div>
           ) : (
@@ -811,7 +992,7 @@ export function GenerationStudio({ feature }: { feature: Feature }) {
           {[
             { label: "Format", value: previewLabel, tone: "accent" as const },
             { label: "Estimasi", value: feature.eta, tone: "neutral" as const },
-            { label: "Mode", value: useMockMode ? "mockup" : "utama", tone: useMockMode ? ("warning" as const) : ("success" as const) },
+            ...(!isPhoto46 && !isProductPhoto ? [{ label: "Mode", value: useMockMode ? "mockup" : "utama", tone: useMockMode ? ("warning" as const) : ("success" as const) }] : []),
             { label: "Antrian", value: isGenerating ? "berjalan" : "siap", tone: isGenerating ? ("warning" as const) : ("neutral" as const) },
           ].map((item) => (
             <div key={item.label} className="rounded-ui border border-border/60 bg-background/70 p-3">
@@ -850,7 +1031,7 @@ export function GenerationStudio({ feature }: { feature: Feature }) {
           </button>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={result.output_url}
+            src={resultOutputUrl ?? result.output_url}
             alt={`Preview hasil ${feature.title}`}
             className="max-h-[92vh] w-auto max-w-full object-contain"
             onMouseDown={(event) => event.stopPropagation()}
@@ -908,8 +1089,224 @@ export function GenerationStudio({ feature }: { feature: Feature }) {
   );
 }
 
+async function createProductCtaOverlayUrl(imageUrl: string, text: string) {
+  const response = await fetch(imageUrl, { credentials: "include" });
+
+  if (!response.ok) {
+    throw new Error("Gagal menyiapkan overlay CTA.");
+  }
+
+  const image = await loadImageFromBlob(await response.blob());
+  const width = image.naturalWidth || image.width;
+  const height = image.naturalHeight || image.height;
+  const canvas = document.createElement("canvas");
+  const context = canvas.getContext("2d");
+
+  if (!context) {
+    throw new Error("Browser tidak mendukung overlay CTA.");
+  }
+
+  canvas.width = width;
+  canvas.height = height;
+  context.drawImage(image, 0, 0, width, height);
+  drawProductCtaOverlay(context, text, width, height);
+
+  return canvasToObjectUrl(canvas);
+}
+
+function loadImageFromBlob(blob: Blob) {
+  return new Promise<HTMLImageElement>((resolve, reject) => {
+    const objectUrl = URL.createObjectURL(blob);
+    const image = new Image();
+
+    image.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+      resolve(image);
+    };
+    image.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      reject(new Error("Gambar hasil tidak bisa dibuka."));
+    };
+    image.src = objectUrl;
+  });
+}
+
+function canvasToObjectUrl(canvas: HTMLCanvasElement) {
+  return new Promise<string>((resolve, reject) => {
+    canvas.toBlob((blob) => {
+      if (!blob) {
+        reject(new Error("Gagal membuat file final."));
+        return;
+      }
+
+      resolve(URL.createObjectURL(blob));
+    }, "image/png");
+  });
+}
+
+function drawProductCtaOverlay(context: CanvasRenderingContext2D, text: string, width: number, height: number) {
+  const safeText = text.trim();
+
+  if (!safeText) return;
+
+  const baseFontSize = Math.round(Math.min(Math.max(width * 0.033, 22), 44));
+  const maxTextWidth = width * 0.58;
+  const layout = fitCtaText(context, safeText, baseFontSize, maxTextWidth);
+  const lineHeight = Math.round(layout.fontSize * 1.22);
+  const paddingX = Math.round(layout.fontSize * 0.95);
+  const paddingY = Math.round(layout.fontSize * 0.58);
+  const maxLineWidth = Math.max(...layout.lines.map((line) => context.measureText(line).width));
+  const pillWidth = Math.min(Math.max(maxLineWidth + paddingX * 2, width * 0.29), width * 0.78);
+  const pillHeight = layout.lines.length * lineHeight + paddingY * 2;
+  const x = width - pillWidth - width * 0.075;
+  const y = height - pillHeight - height * 0.075;
+  const radius = Math.min(pillHeight / 2.2, width * 0.026);
+
+  context.save();
+  context.shadowColor = "rgba(0, 0, 0, 0.34)";
+  context.shadowBlur = Math.max(18, width * 0.024);
+  context.shadowOffsetY = Math.max(8, height * 0.008);
+  roundedRectPath(context, x, y, pillWidth, pillHeight, radius);
+  const fill = context.createLinearGradient(x, y, x + pillWidth, y + pillHeight);
+  fill.addColorStop(0, "rgba(120, 37, 30, 0.94)");
+  fill.addColorStop(1, "rgba(72, 20, 29, 0.94)");
+  context.fillStyle = fill;
+  context.fill();
+
+  context.shadowColor = "transparent";
+  context.lineWidth = Math.max(2, width * 0.0025);
+  context.strokeStyle = "rgba(255, 241, 214, 0.92)";
+  context.stroke();
+
+  context.globalAlpha = 0.26;
+  context.strokeStyle = "rgba(255, 255, 255, 0.86)";
+  context.lineWidth = Math.max(1, width * 0.0012);
+  roundedRectPath(context, x + 4, y + 4, pillWidth - 8, pillHeight - 8, Math.max(4, radius - 4));
+  context.stroke();
+  context.globalAlpha = 1;
+
+  setCtaFont(context, layout.fontSize);
+  context.fillStyle = "#fff8ef";
+  context.textAlign = "center";
+  context.textBaseline = "middle";
+  context.shadowColor = "rgba(0, 0, 0, 0.22)";
+  context.shadowBlur = 4;
+  context.shadowOffsetY = 1;
+
+  const textY = y + pillHeight / 2 - ((layout.lines.length - 1) * lineHeight) / 2;
+  layout.lines.forEach((line, index) => {
+    context.fillText(line, x + pillWidth / 2, textY + index * lineHeight);
+  });
+
+  context.restore();
+}
+
+function fitCtaText(context: CanvasRenderingContext2D, text: string, baseFontSize: number, maxTextWidth: number) {
+  const minFontSize = Math.max(16, Math.round(baseFontSize * 0.62));
+
+  for (const maxLines of [2, 3]) {
+    for (let fontSize = baseFontSize; fontSize >= minFontSize; fontSize -= 1) {
+      setCtaFont(context, fontSize);
+      const lines = wrapCanvasText(context, text, maxTextWidth);
+
+      if (lines.length <= maxLines) {
+        return { fontSize, lines };
+      }
+    }
+  }
+
+  setCtaFont(context, minFontSize);
+
+  return { fontSize: minFontSize, lines: wrapCanvasText(context, text, maxTextWidth) };
+}
+
+function wrapCanvasText(context: CanvasRenderingContext2D, text: string, maxWidth: number) {
+  const words = text.split(/\s+/).filter(Boolean);
+  const lines: string[] = [];
+  let currentLine = "";
+
+  words.forEach((word) => {
+    const nextLine = currentLine ? `${currentLine} ${word}` : word;
+
+    if (context.measureText(nextLine).width <= maxWidth) {
+      currentLine = nextLine;
+      return;
+    }
+
+    if (currentLine) {
+      lines.push(currentLine);
+      currentLine = "";
+    }
+
+    if (context.measureText(word).width <= maxWidth) {
+      currentLine = word;
+      return;
+    }
+
+    splitLongCanvasWord(context, word, maxWidth).forEach((chunk, index, chunks) => {
+      if (index === chunks.length - 1) {
+        currentLine = chunk;
+        return;
+      }
+
+      lines.push(chunk);
+    });
+  });
+
+  if (currentLine) {
+    lines.push(currentLine);
+  }
+
+  return lines.length > 0 ? lines : [text];
+}
+
+function splitLongCanvasWord(context: CanvasRenderingContext2D, word: string, maxWidth: number) {
+  const chunks: string[] = [];
+  let currentChunk = "";
+
+  Array.from(word).forEach((character) => {
+    const nextChunk = `${currentChunk}${character}`;
+
+    if (currentChunk && context.measureText(nextChunk).width > maxWidth) {
+      chunks.push(currentChunk);
+      currentChunk = character;
+      return;
+    }
+
+    currentChunk = nextChunk;
+  });
+
+  if (currentChunk) {
+    chunks.push(currentChunk);
+  }
+
+  return chunks;
+}
+
+function setCtaFont(context: CanvasRenderingContext2D, fontSize: number) {
+  context.font = `700 ${fontSize}px Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`;
+}
+
+function roundedRectPath(context: CanvasRenderingContext2D, x: number, y: number, width: number, height: number, radius: number) {
+  const safeRadius = Math.min(radius, width / 2, height / 2);
+
+  context.beginPath();
+  context.moveTo(x + safeRadius, y);
+  context.lineTo(x + width - safeRadius, y);
+  context.quadraticCurveTo(x + width, y, x + width, y + safeRadius);
+  context.lineTo(x + width, y + height - safeRadius);
+  context.quadraticCurveTo(x + width, y + height, x + width - safeRadius, y + height);
+  context.lineTo(x + safeRadius, y + height);
+  context.quadraticCurveTo(x, y + height, x, y + height - safeRadius);
+  context.lineTo(x, y + safeRadius);
+  context.quadraticCurveTo(x, y, x + safeRadius, y);
+  context.closePath();
+}
+
 function aspectRatioFor(ratio: string) {
-  if (ratio === "4x6 portrait") return "2:3";
+  if (ratio === "2x3" || ratio === "4x6") return "2:3";
+  if (ratio === "3x4") return "3:4";
+  if (ratio === "4x4") return "1:1";
   if (ratio.startsWith("1:1")) return "1:1";
   if (ratio.startsWith("4:5")) return "4:5";
   if (ratio.startsWith("9:16")) return "9:16";
@@ -971,7 +1368,7 @@ function defaultInstructionFor(slug: Feature["slug"]) {
   }
 
   if (slug === "foto-4x6") {
-    return "Buat pas foto 4x6 formal dengan latar biru muda, wajah natural, dan pencahayaan rapi.";
+    return "Buat pas foto formal sesuai pilihan background, pakaian, dan ukuran output. Wajah harus tetap natural dan identitas tidak berubah.";
   }
 
   if (slug === "hapus-bg") {
@@ -983,6 +1380,34 @@ function defaultInstructionFor(slug: Feature["slug"]) {
   }
 
   return "Buat foto produk katalog dengan cahaya lembut, bayangan natural, dan warna produk tetap akurat.";
+}
+
+function OptionGroup({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div>
+      <p className="mb-2 text-[11px] font-black uppercase tracking-[0.14em] text-muted-foreground">{label}</p>
+      <div className="grid grid-cols-2 gap-2 rounded-ui border border-border/65 bg-background/75 p-1.5 sm:grid-cols-3">
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function OptionButton({ children, isActive, onClick }: { children: ReactNode; isActive: boolean; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      aria-pressed={isActive}
+      className={
+        isActive
+          ? "min-h-10 rounded-ui border border-primary/15 bg-[linear-gradient(135deg,hsl(var(--primary)/.92)_0%,hsl(var(--primary)/.82)_48%,hsl(var(--accent)/.62)_100%)] px-2 py-2 text-xs font-semibold leading-4 text-primary-foreground shadow-soft"
+          : "min-h-10 rounded-ui bg-card/80 px-2 py-2 text-xs font-semibold leading-4 text-muted-foreground transition hover:bg-muted hover:text-foreground"
+      }
+      onClick={onClick}
+    >
+      {children}
+    </button>
+  );
 }
 
 function StudioStep({
