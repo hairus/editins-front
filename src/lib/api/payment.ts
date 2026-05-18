@@ -12,6 +12,12 @@ type PaymentPayload = {
   error?: string;
 };
 
+type PaymentStatusPayload = PaymentPayload & {
+  product_type?: string;
+  product_id?: string;
+  paid_at?: string | null;
+};
+
 export async function createTierPayment(productId: string) {
   const response = await apiFetch("/payment/create", {
     method: "POST",
@@ -28,6 +34,17 @@ export async function createTierPayment(productId: string) {
 
   if (!response.ok || !payload.checkout_url) {
     throw new Error(payload.message ?? payload.error ?? "Gagal membuat transaksi.");
+  }
+
+  return payload;
+}
+
+export async function paymentStatus(merchantRef: string) {
+  const response = await apiFetch(`/payment/status/${encodeURIComponent(merchantRef)}`);
+  const payload = (await response.json().catch(() => ({}))) as PaymentStatusPayload;
+
+  if (!response.ok) {
+    throw new Error(payload.message ?? payload.error ?? "Gagal membaca status pembayaran.");
   }
 
   return payload;

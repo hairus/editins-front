@@ -86,6 +86,25 @@ export async function logout() {
   }
 }
 
+export async function updatePassword(input: {
+  current_password?: string;
+  password: string;
+  password_confirmation: string;
+}) {
+  const response = await apiFetch("/auth/password", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(input),
+  });
+
+  if (!response.ok) {
+    const payload = (await response.json().catch(() => ({}))) as AuthPayload;
+    throw new Error(payload.message ?? payload.error ?? "Password gagal diperbarui.");
+  }
+}
+
 async function authResponse(response: Response) {
   const payload = (await response.json().catch(() => ({}))) as AuthPayload;
 

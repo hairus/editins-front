@@ -37,7 +37,7 @@ const featureVisuals: Partial<Record<FeatureSlug, { icon: typeof Camera; label: 
 const pricing = [
   { name: "Starter", price: "Rp29.000", credits: "30 kredit / 30 hari", detail: "Cocok untuk seller baru yang ingin mulai merapikan foto jualan." },
   { name: "Pro", price: "Rp59.000", credits: "200 kredit / 30 hari", detail: "Pilihan utama untuk produksi foto produk rutin dan banner promo." },
-  { name: "VIP", price: "Rp129.000", credits: "Kredit besar + prioritas", detail: "Untuk UMKM yang butuh produksi konten lebih sering dan cepat." },
+  { name: "VIP", price: "Rp129.000", credits: "Kredit besar untuk produksi", detail: "Untuk UMKM yang butuh banyak variasi konten dan campaign visual." },
 ];
 
 const faq = [

@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Panel } from "@/components/ui/panel";
 import { businessConfig, type BusinessTier } from "@/lib/api/business";
 import { createTierPayment } from "@/lib/api/payment";
-import { tierMarketingLabel } from "@/lib/marketing-copy";
+import { tierMarketingBenefits, tierMarketingDescription, tierMarketingLabel } from "@/lib/marketing-copy";
 import { notifyApp } from "@/lib/notify";
 
 function formatCurrency(value: number) {
@@ -78,15 +78,31 @@ export default function BillingPage() {
       <AuthRequired allowGuest>
         <section className="app-container pb-24 pt-8">
         <SectionHeading
-          eyebrow="Kredit"
-          title="Top up kredit"
-          description="Pilih paket sesuai ritme produksi foto jualan Anda. Kredit aktif otomatis setelah pembayaran berhasil."
+          eyebrow="Langganan Editins"
+          title="Pilih paket yang bikin foto jualan makin siap closing"
+          description="Mulai dari katalog sederhana sampai produksi konten besar. Kredit aktif otomatis setelah pembayaran berhasil, jadi Anda bisa langsung generate visual untuk jualan."
         />
 
         {errorMessage ? (
           <div className="mt-5 rounded-ui border border-destructive/20 bg-destructive/10 px-4 py-3 text-sm font-semibold text-destructive">
             {errorMessage}
           </div>
+        ) : null}
+
+        {!user ? (
+          <Panel className="mt-6 border-primary/25 bg-primary/10 p-5 sm:flex sm:items-center sm:justify-between sm:gap-5">
+            <div>
+              <p className="text-lg font-black">Masuk diperlukan untuk top up kredit.</p>
+              <p className="mt-1 text-sm font-semibold leading-6 text-muted-foreground">
+                Login dulu agar paket, kredit, dan riwayat pembayaran tersimpan di akun Anda.
+              </p>
+            </div>
+            <Link className="mt-4 block sm:mt-0" href="/login?next=/billing">
+              <Button className="min-h-12 w-full px-8 text-base sm:w-auto">
+                Login untuk Top Up
+              </Button>
+            </Link>
+          </Panel>
         ) : null}
 
         <div className="mt-8 grid gap-4 lg:grid-cols-3">
@@ -110,17 +126,20 @@ export default function BillingPage() {
               </div>
               <p className="mt-5 text-4xl font-black tracking-normal">{formatCurrency(tier.price_idr)}</p>
               <p className="mt-1 text-sm font-black text-muted-foreground">{tier.monthly_credits} kredit / 30 hari</p>
-              <p className="mt-4 min-h-12 text-sm font-medium leading-6 text-muted-foreground">
-                {tier.features.map(featureLabel).join(", ")}
+              <p className="mt-4 min-h-24 text-sm font-medium leading-6 text-muted-foreground">
+                {tierMarketingDescription(tier.id)}
               </p>
               <ul className="mt-5 space-y-3 text-sm font-semibold">
-                {["Harga transparan", "Kredit aktif otomatis", "Cocok untuk produksi rutin"].map((item) => (
+                {tierMarketingBenefits(tier.id).map((item) => (
                   <li key={item} className="flex items-center gap-2">
                     <CheckCircle2 className="h-4 w-4 text-success" />
                     {item}
                   </li>
                 ))}
               </ul>
+              <p className="mt-5 text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">
+                Termasuk: {tier.features.map(featureLabel).join(", ")}
+              </p>
               <Button
                 className="mt-5 w-full"
                 disabled={activeTier !== null || isCurrentTier}
@@ -134,15 +153,6 @@ export default function BillingPage() {
             );
           })}
         </div>
-
-        {!user ? (
-          <Panel className="mt-5 p-4">
-            <p className="text-sm font-semibold">Masuk diperlukan untuk top up kredit.</p>
-            <Link className="mt-3 inline-flex" href="/login?next=/billing">
-              <Button size="sm">Login</Button>
-            </Link>
-          </Panel>
-        ) : null}
 
         <Panel className="mt-5 p-4">
           <div className="flex gap-3">
@@ -167,11 +177,11 @@ function featureLabel(value: string) {
     all_features: "Semua pilihan visual",
     history: "Riwayat tersimpan",
     download_hd: "Download kualitas tinggi",
-    priority_queue: "Antrian lebih cepat",
+    priority_queue: "Produksi konten rutin",
     boost_mode: "Mode produksi besar",
     early_access: "Akses fitur lebih awal",
     community: "Komunitas kreator",
-    priority_support: "Bantuan prioritas",
+    priority_support: "Bantuan kebutuhan brand",
   };
 
   return labels[value] ?? value.replaceAll("_", " ");

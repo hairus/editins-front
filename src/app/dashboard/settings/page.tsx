@@ -22,7 +22,9 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { useAuth } from "@/components/auth-provider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/field";
 import { Panel } from "@/components/ui/panel";
+import { updatePassword } from "@/lib/api/auth";
 import { tierMarketingLabel } from "@/lib/marketing-copy";
 import { notifyApp } from "@/lib/notify";
 
@@ -34,6 +36,10 @@ export default function SettingsPage() {
   const [copied, setCopied] = useState(false);
   const [compactHistory, setCompactHistory] = useState(true);
   const [creditAlerts, setCreditAlerts] = useState(true);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [newPasswordConfirmation, setNewPasswordConfirmation] = useState("");
+  const [isSavingPassword, setSavingPassword] = useState(false);
 
   async function handleRefresh() {
     setRefreshing(true);
@@ -58,6 +64,35 @@ export default function SettingsPage() {
   async function handleLogout() {
     await logout().catch(() => undefined);
     router.push("/login");
+  }
+
+  async function handlePasswordSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setSavingPassword(true);
+
+    try {
+      await updatePassword({
+        current_password: currentPassword || undefined,
+        password: newPassword,
+        password_confirmation: newPasswordConfirmation,
+      });
+      setCurrentPassword("");
+      setNewPassword("");
+      setNewPasswordConfirmation("");
+      notifyApp({
+        title: "Password tersimpan",
+        detail: "Akun ini sekarang bisa login memakai email dan password.",
+        tone: "success",
+      });
+    } catch (error) {
+      notifyApp({
+        title: "Password gagal diperbarui",
+        detail: error instanceof Error ? error.message : "Coba gunakan password yang lebih kuat.",
+        tone: "danger",
+      });
+    } finally {
+      setSavingPassword(false);
+    }
   }
 
   return (
@@ -150,6 +185,44 @@ export default function SettingsPage() {
                       <ThemeToggle />
                     </div>
                   </div>
+                </Panel>
+
+                <Panel className="overflow-hidden">
+                  <SectionHeader icon={KeyRound} title="Password" badge="Login email" />
+                  <form className="grid gap-3 p-4" onSubmit={handlePasswordSubmit}>
+                    <p className="text-sm font-medium leading-6 text-muted-foreground">
+                      Jika akun dibuat dari Google, kosongkan password lama dan isi password baru untuk mengaktifkan login email/password.
+                    </p>
+                    <Input
+                      autoComplete="current-password"
+                      placeholder="Password lama (kosongkan jika akun Google)"
+                      type="password"
+                      value={currentPassword}
+                      onChange={(event) => setCurrentPassword(event.target.value)}
+                    />
+                    <Input
+                      autoComplete="new-password"
+                      minLength={8}
+                      placeholder="Password baru"
+                      required
+                      type="password"
+                      value={newPassword}
+                      onChange={(event) => setNewPassword(event.target.value)}
+                    />
+                    <Input
+                      autoComplete="new-password"
+                      minLength={8}
+                      placeholder="Konfirmasi password baru"
+                      required
+                      type="password"
+                      value={newPasswordConfirmation}
+                      onChange={(event) => setNewPasswordConfirmation(event.target.value)}
+                    />
+                    <Button className="w-full sm:w-fit" disabled={isSavingPassword}>
+                      {isSavingPassword ? <RefreshCw className="h-4 w-4 animate-spin" /> : <KeyRound className="h-4 w-4" />}
+                      Simpan Password
+                    </Button>
+                  </form>
                 </Panel>
               </div>
 

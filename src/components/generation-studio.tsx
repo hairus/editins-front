@@ -168,6 +168,7 @@ export function GenerationStudio({ feature }: { feature: Feature }) {
   const [progress, setProgress] = useState(0);
   const [mode, setMode] = useState(defaults[feature.slug]);
   const [result, setResult] = useState<GenerateImageResult | null>(null);
+  const [resultImageUrl, setResultImageUrl] = useState<string | null>(null);
   const [ctaOverlayUrl, setCtaOverlayUrl] = useState<string | null>(null);
   const [isPreviewOpen, setPreviewOpen] = useState(false);
   const [quotaDialog, setQuotaDialog] = useState<{ message: string; upgradeUrl: string } | null>(null);
@@ -255,6 +256,18 @@ export function GenerationStudio({ feature }: { feature: Feature }) {
       tone: "warning",
     });
   }, [maxSelectedFiles, selectedFiles.length]);
+
+  useEffect(() => {
+    if (result || !resultImageUrl) return;
+
+    setResultImageUrl(null);
+  }, [result, resultImageUrl]);
+
+  useEffect(() => {
+    if (!resultImageUrl) return;
+
+    return () => URL.revokeObjectURL(resultImageUrl);
+  }, [resultImageUrl]);
 
   const previewLabel = useMemo(() => {
     if (isRemoveBg) return "PNG transparan";
@@ -347,6 +360,7 @@ export function GenerationStudio({ feature }: { feature: Feature }) {
     setGenerating(true);
     setQuotaDialog(null);
     setResult(null);
+    setResultImageUrl(null);
     setPreviewOpen(false);
     setProgress(14);
 
@@ -364,7 +378,10 @@ export function GenerationStudio({ feature }: { feature: Feature }) {
         logoImage: feature.slug === "foto-produk" ? logoFile : null,
       });
 
+      setProgress(94);
+      const readyImageUrl = await createReadyImageObjectUrl(generated.output_url);
       setProgress(100);
+      setResultImageUrl(readyImageUrl);
       setResult(generated);
       await refreshUser().catch(() => undefined);
     } catch (error) {
@@ -557,7 +574,7 @@ export function GenerationStudio({ feature }: { feature: Feature }) {
     ].join("\n");
   }
 
-  const resultOutputUrl = result ? ctaOverlayUrl ?? result.output_url : null;
+  const resultOutputUrl = result ? ctaOverlayUrl ?? resultImageUrl ?? result.output_url : null;
   const resultDownloadUrl = result ? ctaOverlayUrl ?? result.download_url ?? result.output_url : null;
 
   return (
@@ -1127,6 +1144,36 @@ function loadImageFromBlob(blob: Blob) {
       URL.revokeObjectURL(objectUrl);
       reject(new Error("Gambar hasil tidak bisa dibuka."));
     };
+    image.src = objectUrl;
+  });
+}
+
+async function createReadyImageObjectUrl(imageUrl: string) {
+  const response = await fetch(imageUrl, { credentials: "include" });
+
+  if (!response.ok) {
+    throw new Error("Gambar hasil belum bisa dibuka.");
+  }
+
+  const blob = await response.blob();
+  const objectUrl = URL.createObjectURL(blob);
+
+  try {
+    await loadImageFromObjectUrl(objectUrl);
+  } catch (error) {
+    URL.revokeObjectURL(objectUrl);
+    throw error;
+  }
+
+  return objectUrl;
+}
+
+function loadImageFromObjectUrl(objectUrl: string) {
+  return new Promise<HTMLImageElement>((resolve, reject) => {
+    const image = new Image();
+
+    image.onload = () => resolve(image);
+    image.onerror = () => reject(new Error("Gambar hasil tidak bisa dibuka."));
     image.src = objectUrl;
   });
 }
